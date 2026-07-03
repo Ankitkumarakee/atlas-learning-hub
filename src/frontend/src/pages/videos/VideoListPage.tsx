@@ -1,6 +1,6 @@
-import { VideoSort } from "@/backend";
 import { ContentCard } from "@/components/shared/ContentCard";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorState } from "@/components/shared/ErrorState";
 import { LoadingState } from "@/components/shared/LoadingState";
 import { Pagination } from "@/components/shared/Pagination";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { VideoSort } from "@/hooks/useQueries";
 import { useVideos } from "@/hooks/useQueries";
 import type { Video, VideoFilter } from "@/types";
 import type { ContentCardItem } from "@/types";
@@ -158,7 +159,8 @@ export default function VideoListPage() {
     [tab, search, category, page],
   );
 
-  const { data, isLoading, isFetching } = useVideos(filter);
+  const { data, isLoading, isFetching, isError, error, refetch } =
+    useVideos(filter);
 
   const items = data?.items ?? [];
   const total = data ? Number(data.total) : 0;
@@ -287,7 +289,21 @@ export default function VideoListPage() {
             />
           )}
 
-          {!isLoading && items.length === 0 && (
+          {!isLoading && isError && (
+            <ErrorState
+              title="Couldn't load videos"
+              message={
+                error instanceof Error
+                  ? error.message
+                  : "We couldn't fetch videos right now. Please try again."
+              }
+              retryLabel="Retry"
+              onRetry={() => refetch()}
+              ocid="videos.error_state"
+            />
+          )}
+
+          {!isLoading && !isError && items.length === 0 && (
             <EmptyState
               icon={VideoIcon}
               title="No videos found"

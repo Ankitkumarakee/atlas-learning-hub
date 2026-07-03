@@ -1,5 +1,7 @@
 import { ChatMessage } from "@/components/shared/ChatMessage";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorState } from "@/components/shared/ErrorState";
+import { TypingIndicator } from "@/components/shared/TypingIndicator";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import {
   Bot,
+  Clock,
   LogIn,
   MessageSquarePlus,
   Send,
@@ -42,11 +45,35 @@ import { toast } from "sonner";
 /* ------------------------------------------------------------------ */
 
 const SUGGESTED_PROMPTS = [
-  "Summarize the latest notes on linear algebra",
-  "Explain the key ideas in the most recent blog post",
-  "What concepts should I review before a calculus quiz?",
-  "Find videos that cover recursion fundamentals",
+  "Explain a concept from my notes",
+  "Summarize the latest blogs",
+  "Help me understand a video topic",
+  "Quiz me on recent content",
+  "What should I study next based on my activity?",
+  "Give me a quick recap of this week's uploads",
 ];
+
+/* ------------------------------------------------------------------ */
+/* Time helpers                                                       */
+/* ------------------------------------------------------------------ */
+
+function formatRelativeTime(ts: bigint): string {
+  const ms = Number(ts);
+  if (!ms) return "";
+  const diff = Date.now() - ms;
+  const sec = Math.floor(diff / 1000);
+  if (sec < 60) return "just now";
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const day = Math.floor(hr / 24);
+  if (day < 7) return `${day}d ago`;
+  return new Date(ms).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+}
 
 /* ------------------------------------------------------------------ */
 /* Sidebar                                                            */
@@ -91,21 +118,23 @@ function ConversationSidebar({ activeId, onSelect, onNew }: SidebarProps) {
       </div>
 
       <ScrollArea className="flex-1">
-        <ul className="space-y-1 p-2">
+        <ul className="space-y-1 p-2" aria-label="Conversation history">
           {isLoading &&
             Array.from({ length: 4 }).map((_, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton, no item identity
               <li
                 key={`tutor-sidebar-loading-${i}`}
                 className="px-2 py-2"
                 data-ocid={`tutor.sidebar.loading_state.item.${i + 1}`}
               >
-                <Skeleton className="h-10 w-full rounded-lg" />
+                <Skeleton className="h-12 w-full rounded-lg" />
               </li>
             ))}
 
           {!isLoading && (!conversations || conversations.length === 0) && (
-            <li className="px-2 py-6 text-center text-xs text-muted-foreground">
+            <li
+              className="px-2 py-6 text-center text-xs text-muted-foreground"
+              data-ocid="tutor.sidebar.empty_state"
+            >
               No conversations yet. Start a new chat.
             </li>
           )}
@@ -125,15 +154,25 @@ function ConversationSidebar({ activeId, onSelect, onNew }: SidebarProps) {
                       : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
                   )}
                   data-ocid={`tutor.sidebar.item.${i + 1}`}
+                  aria-label={`Conversation: ${c.title}, updated ${formatRelativeTime(c.updatedAt)}`}
+                  aria-current={isActive ? "true" : undefined}
                 >
                   <button
                     type="button"
                     onClick={() => onSelect(c.id)}
-                    className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                    className="flex min-w-0 flex-1 flex-col items-start gap-0.5 text-left"
                     data-ocid={`tutor.sidebar.open_button.${i + 1}`}
                   >
-                    <Bot className="size-4 shrink-0" aria-hidden />
-                    <span className="truncate text-sm">{c.title}</span>
+                    <span className="flex w-full items-center gap-1.5">
+                      <Bot className="size-4 shrink-0" aria-hidden />
+                      <span className="truncate text-sm font-medium">
+                        {c.title}
+                      </span>
+                    </span>
+                    <span className="flex items-center gap-1 pl-5 text-[11px] text-muted-foreground">
+                      <Clock className="size-3" aria-hidden />
+                      {formatRelativeTime(c.updatedAt)}
+                    </span>
                   </button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
@@ -218,9 +257,10 @@ function ChatArea({ conversationId }: ChatAreaProps) {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, sendMessage.isPending]);
 
   const hasMessages = !!messages && messages.length > 0;
+  const hasError = sendMessage.isError;
 
   const submit = (text: string) => {
     const trimmed = text.trim();
@@ -242,7 +282,6 @@ function ChatArea({ conversationId }: ChatAreaProps) {
           {isLoading && (
             <div className="space-y-6" data-ocid="tutor.chat.loading_state">
               {Array.from({ length: 3 }).map((_, i) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton, no item identity
                 <div
                   key={`tutor-loading-${i}`}
                   className="flex gap-3"
@@ -259,7 +298,10 @@ function ChatArea({ conversationId }: ChatAreaProps) {
           )}
 
           {!isLoading && !hasMessages && (
-            <div className="flex flex-col items-center justify-center gap-6 py-16 text-center">
+            <div
+              className="flex flex-col items-center justify-center gap-6 py-16 text-center"
+              data-ocid="tutor.chat.empty_state"
+            >
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -276,7 +318,10 @@ function ChatArea({ conversationId }: ChatAreaProps) {
                   content. Try one of these to begin.
                 </p>
               </div>
-              <div className="grid w-full max-w-2xl grid-cols-1 gap-3 sm:grid-cols-2">
+              <fieldset
+                className="grid w-full max-w-2xl grid-cols-1 gap-3 sm:grid-cols-2"
+                aria-label="Suggested prompts"
+              >
                 {SUGGESTED_PROMPTS.map((prompt, i) => (
                   <motion.button
                     key={prompt}
@@ -287,13 +332,14 @@ function ChatArea({ conversationId }: ChatAreaProps) {
                     whileHover={{ y: -2 }}
                     disabled={!conversationId || sendMessage.isPending}
                     onClick={() => submit(prompt)}
-                    className="rounded-xl border border-border bg-card px-4 py-3 text-left text-sm text-foreground transition-smooth hover:border-primary/40 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-xl border border-border bg-card px-4 py-3 text-left text-sm text-foreground transition-smooth hover:border-primary/40 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                     data-ocid={`tutor.suggested_prompt.button.${i + 1}`}
+                    aria-label={`Suggested prompt: ${prompt}`}
                   >
                     {prompt}
                   </motion.button>
                 ))}
-              </div>
+              </fieldset>
             </div>
           )}
 
@@ -310,12 +356,20 @@ function ChatArea({ conversationId }: ChatAreaProps) {
                   <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground">
                     <Bot className="size-4" aria-hidden />
                   </div>
-                  <div className="flex items-center gap-1 rounded-2xl rounded-tl-sm bg-muted px-4 py-3">
-                    <span className="size-2 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.3s]" />
-                    <span className="size-2 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.15s]" />
-                    <span className="size-2 animate-bounce rounded-full bg-muted-foreground" />
-                  </div>
+                  <TypingIndicator
+                    ocid="tutor.chat.typing_indicator"
+                    label="AI tutor is typing a response"
+                  />
                 </div>
+              )}
+              {hasError && (
+                <ErrorState
+                  title="Message failed to send"
+                  message="We couldn't deliver your message. Please try again."
+                  retryLabel="Retry"
+                  onRetry={() => sendMessage.reset()}
+                  ocid="tutor.chat.error_state"
+                />
               )}
             </div>
           )}
@@ -376,6 +430,7 @@ export default function AITutorPage() {
   const handleNewChat = () => {
     createConversation.mutate("New conversation", {
       onSuccess: (conv) => {
+        toast.success("Conversation created");
         navigate({
           to: "/tutor/$conversationId",
           params: { conversationId: conv.id.toString() },

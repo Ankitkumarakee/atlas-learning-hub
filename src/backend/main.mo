@@ -13,6 +13,7 @@ import VideoTypes "types/videos";
 import NotificationTypes "types/notifications";
 import AITutorTypes "types/ai-tutor";
 import DashboardsTypes "types/dashboards";
+import DiscoveryTypes "types/discovery";
 
 import Videos "lib/videos";
 
@@ -22,6 +23,7 @@ import VideosApi "mixins/videos-api";
 import AITutorApi "mixins/ai-tutor-api";
 import DashboardsApi "mixins/dashboards-api";
 import NotificationsApi "mixins/notifications-api";
+import DiscoveryApi "mixins/discovery-api";
 
 // Composition root for the Atlas Learning Hub backend canister.
 //
@@ -129,6 +131,7 @@ actor {
   include DashboardsApi(
     accessControlState,
     blogs,
+    comments,
     notes,
     videoStore,
     blogBookmarks,
@@ -143,4 +146,12 @@ actor {
 
   // Notifications domain
   include NotificationsApi(notificationsByUser, nextNotificationId);
+
+  // Discovery domain (no own state; aggregates published content from
+  // blogs, notes, and videos for related-content and trending endpoints).
+  include DiscoveryApi(
+    blogs,
+    notes,
+    videoStore,
+  );
 };

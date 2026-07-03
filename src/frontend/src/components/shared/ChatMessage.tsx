@@ -1,4 +1,5 @@
 import type { Message } from "@/backend";
+import { MarkdownRenderer } from "@/components/shared/MarkdownRenderer";
 import { cn } from "@/lib/utils";
 import { Bot, User } from "lucide-react";
 
@@ -44,16 +45,23 @@ export function ChatMessage({ message, index }: ChatMessageProps) {
             : "rounded-tl-sm bg-muted text-foreground",
         )}
       >
-        <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
-          {message.content}
-        </p>
+        {isUser ? (
+          <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
+            {message.content}
+          </p>
+        ) : (
+          <MarkdownRenderer
+            content={message.content}
+            ocid={`chat.message.${index}.markdown`}
+            className="text-sm leading-relaxed"
+          />
+        )}
         {message.sources.length > 0 && (
           <div className="mt-2 space-y-1 border-t border-border/40 pt-2">
             <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
               Sources
             </p>
             {message.sources.map((src, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: source has no stable id
               <p key={`source-${i}`} className="text-xs text-primary">
                 {src.title}
               </p>

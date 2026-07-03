@@ -1,6 +1,7 @@
 import { NoteFileType, NoteSort } from "@/backend";
 import { ContentCard } from "@/components/shared/ContentCard";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorState } from "@/components/shared/ErrorState";
 import { LoadingState } from "@/components/shared/LoadingState";
 import { Pagination } from "@/components/shared/Pagination";
 import { Badge } from "@/components/ui/badge";
@@ -73,7 +74,7 @@ export default function NoteListPage() {
     [page, sort, search, fileType, subject],
   );
 
-  const { data, isLoading, isError, error } = useNotes(query);
+  const { data, isLoading, isError, error, refetch } = useNotes(query);
 
   const items = data?.items ?? [];
   const total = data ? Number(data.total) : 0;
@@ -216,12 +217,14 @@ export default function NoteListPage() {
         {isLoading ? (
           <LoadingState variant="grid" count={6} ocid="note.loading_state" />
         ) : isError ? (
-          <EmptyState
+          <ErrorState
             icon={FileText}
             title="Couldn't load notes"
-            description={
+            message={
               error instanceof Error ? error.message : "Please try again later."
             }
+            retryLabel="Retry"
+            onRetry={() => refetch()}
             ocid="note.error_state"
           />
         ) : items.length === 0 ? (

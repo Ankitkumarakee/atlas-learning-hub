@@ -1,14 +1,16 @@
-import { NoteFileType } from "@/backend";
+import { ContentType, NoteFileType } from "@/backend";
 import { BookmarkButton } from "@/components/shared/BookmarkButton";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { LikeButton } from "@/components/shared/LikeButton";
 import { LoadingState } from "@/components/shared/LoadingState";
+import { RelatedContentSection } from "@/components/shared/RelatedContentSection";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/useAuth";
 import { useBackend } from "@/hooks/useBackend";
-import { useLikeNote, useNote } from "@/hooks/useQueries";
+import { useLikeNote, useNote, useRelatedContent } from "@/hooks/useQueries";
+import { recommendationsToCardItems } from "@/lib/recommendations";
 import type { NoteView } from "@/types";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import {
@@ -54,6 +56,11 @@ export default function NoteDetailPage() {
   const { isSignedIn, signIn } = useAuth();
   const { actor } = useBackend();
   const { data: note, isLoading, isError } = useNote(noteId);
+  const relatedQuery = useRelatedContent(ContentType.note, noteId, 4);
+  const relatedItems = relatedQuery.data
+    ? recommendationsToCardItems(relatedQuery.data)
+    : [];
+  const relatedLoading = relatedQuery.isLoading;
   const likeMutation = useLikeNote();
   const [liked, setLiked] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
@@ -227,6 +234,37 @@ export default function NoteDetailPage() {
           />
         </div>
       </article>
+
+      {/* Related content zone */}
+      {relatedLoading ? (
+        <section
+          aria-label="Related content"
+          className="mt-8 border-t border-border bg-background pt-8"
+        >
+          <h2 className="font-display text-xl font-semibold text-foreground">
+            Related content
+          </h2>
+          <div className="mt-6">
+            <LoadingState
+              variant="grid"
+              count={4}
+              ocid="note.related.loading_state"
+            />
+          </div>
+        </section>
+      ) : relatedItems.length > 0 ? (
+        <section
+          aria-label="Related content"
+          className="mt-8 border-t border-border bg-background pt-8"
+        >
+          <RelatedContentSection
+            title="Related content"
+            items={relatedItems}
+            layout="grid"
+            ocid="note.related"
+          />
+        </section>
+      ) : null}
 
       {/* Footer link */}
       <p className="mt-6 text-center text-sm text-muted-foreground">

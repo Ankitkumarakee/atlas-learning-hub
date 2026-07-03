@@ -30,8 +30,10 @@ export interface AdminTotals {
   'flaggedItemsCount' : bigint,
 }
 export type BlogId = bigint;
-export type BlogSort = { 'newest' : null } |
-  { 'mostLiked' : null };
+export type BlogSort = { 'mostBookmarked' : null } |
+  { 'newest' : null } |
+  { 'mostLiked' : null } |
+  { 'mostViewed' : null };
 export interface BlogView {
   'id' : BlogId,
   'title' : string,
@@ -72,6 +74,8 @@ export interface ContentPerformanceItem {
   'trend' : bigint,
   'contentType' : ContentType,
   'views' : bigint,
+  'likes' : bigint,
+  'comments' : bigint,
 }
 export interface ContentRef {
   'id' : bigint,
@@ -91,7 +95,8 @@ export interface Conversation {
 }
 export interface CreatorDashboard {
   'contentPerformance' : Array<ContentPerformanceItem>,
-  'viewsOverTime' : Array<DatePoint>,
+  'viewsOverTime' : Array<CreatorViewsByTypePoint>,
+  'recentComments' : Array<RecentCommentItem>,
   'engagementByType' : Array<EngagementByType>,
   'totals' : CreatorTotals,
 }
@@ -101,7 +106,12 @@ export interface CreatorTotals {
   'totalViews' : bigint,
   'totalLikes' : bigint,
 }
-export interface DatePoint { 'date' : string, 'count' : bigint }
+export interface CreatorViewsByTypePoint {
+  'videoViews' : bigint,
+  'date' : string,
+  'noteViews' : bigint,
+  'blogViews' : bigint,
+}
 export interface EngagementByType {
   'contentType' : ContentType,
   'bookmarks' : bigint,
@@ -193,8 +203,10 @@ export interface NoteListResult {
   'pageSize' : bigint,
   'items' : Array<NoteView>,
 }
-export type NoteSort = { 'mostDownloaded' : null } |
-  { 'newest' : null };
+export type NoteSort = { 'mostBookmarked' : null } |
+  { 'mostDownloaded' : null } |
+  { 'newest' : null } |
+  { 'mostLiked' : null };
 export interface NoteUpdate {
   'title' : [] | [string],
   'subject' : [] | [string],
@@ -239,6 +251,27 @@ export interface PlatformGrowthPoint {
   'newContent' : bigint,
   'newUsers' : bigint,
 }
+export interface RecentCommentItem {
+  'contentId' : bigint,
+  'content' : string,
+  'commentId' : bigint,
+  'contentType' : ContentType,
+  'createdAt' : Timestamp,
+  'author' : Principal,
+  'contentTitle' : string,
+}
+export interface Recommendation {
+  'contentRef' : {
+    'id' : bigint,
+    'title' : string,
+    'contentType' : { 'video' : null } |
+      { 'blog' : null } |
+      { 'note' : null },
+    'author' : Principal,
+  },
+  'score' : number,
+  'reason' : string,
+}
 export type Result = { 'ok' : null } |
   { 'err' : Error };
 export interface SendMessageResult {
@@ -254,11 +287,17 @@ export interface SourceReference {
 export type SourceType = { 'video' : null } |
   { 'blog' : null } |
   { 'note' : null };
+export interface StudentActivityPoint {
+  'date' : string,
+  'bookmarks' : bigint,
+  'likes' : bigint,
+  'aiSessions' : bigint,
+}
 export interface StudentDashboard {
   'bookmarks' : Array<BookmarkItem>,
   'recentAIConversations' : Array<AIConversationSummary>,
   'totals' : StudentTotals,
-  'learningActivityOverTime' : Array<DatePoint>,
+  'learningActivityOverTime' : Array<StudentActivityPoint>,
 }
 export interface StudentTotals {
   'aiConversationsCount' : bigint,
@@ -275,10 +314,24 @@ export interface TransformationOutput {
   'body' : Uint8Array,
   'headers' : Array<HttpHeader>,
 }
+export interface TrendingItem {
+  'views' : bigint,
+  'contentRef' : {
+    'id' : bigint,
+    'title' : string,
+    'contentType' : { 'video' : null } |
+      { 'blog' : null } |
+      { 'note' : null },
+    'author' : Principal,
+  },
+  'likes' : bigint,
+  'score' : number,
+}
 export type UserId = Principal;
 export interface UserManagementItem {
   'id' : Principal,
   'status' : UserStatus,
+  'contentCount' : bigint,
   'name' : string,
   'createdAt' : Timestamp,
   'role' : UserRole__1,
@@ -332,7 +385,9 @@ export interface VideoPage {
   'pageSize' : bigint,
   'items' : Array<Video>,
 }
-export type VideoSort = { 'newest' : null } |
+export type VideoSort = { 'mostBookmarked' : null } |
+  { 'newest' : null } |
+  { 'mostLiked' : null } |
   { 'mostViewed' : null };
 export interface VideoUpdate {
   'title' : [] | [string],
@@ -400,7 +455,18 @@ export interface _SERVICE {
   'getCreatorDashboard' : ActorMethod<[], CreatorDashboard>,
   'getMessages' : ActorMethod<[bigint], Array<Message>>,
   'getNote' : ActorMethod<[bigint], [] | [NoteView]>,
+  'getRelatedContent' : ActorMethod<
+    [
+      { 'video' : null } |
+        { 'blog' : null } |
+        { 'note' : null },
+      bigint,
+      bigint,
+    ],
+    Array<Recommendation>
+  >,
   'getStudentDashboard' : ActorMethod<[], StudentDashboard>,
+  'getTrending' : ActorMethod<[bigint], Array<TrendingItem>>,
   'getVideo' : ActorMethod<[VideoId], [] | [Video]>,
   'hideContent' : ActorMethod<[ModerationTarget], undefined>,
   'incrementDownload' : ActorMethod<[bigint], undefined>,

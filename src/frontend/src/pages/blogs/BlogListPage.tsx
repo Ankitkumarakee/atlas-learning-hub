@@ -1,6 +1,7 @@
 import { BlogSort } from "@/backend";
 import { ContentCard } from "@/components/shared/ContentCard";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorState } from "@/components/shared/ErrorState";
 import { LoadingState } from "@/components/shared/LoadingState";
 import { Pagination } from "@/components/shared/Pagination";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,8 @@ export default function BlogListPage() {
   const total = blogsQuery.data?.total ?? 0n;
   const isLoading = blogsQuery.isLoading;
   const isFetching = blogsQuery.isFetching;
+  const isError = blogsQuery.isError;
+  const error = blogsQuery.error;
 
   const cards: ContentCardItem[] = useMemo(
     () =>
@@ -150,12 +153,26 @@ export default function BlogListPage() {
 
           {/* Results */}
           {showLoading ? (
-            <LoadingState variant="grid" />
+            <LoadingState variant="grid" ocid="blog.loading_state" />
+          ) : isError ? (
+            <ErrorState
+              icon={FileX}
+              title="Couldn't load blogs"
+              message={
+                error instanceof Error
+                  ? error.message
+                  : "Please try again later."
+              }
+              retryLabel="Retry"
+              onRetry={() => blogsQuery.refetch()}
+              ocid="blog.error_state"
+            />
           ) : cards.length === 0 ? (
             <EmptyState
               icon={FileX}
               title="No blogs found"
               description="Try adjusting your search or filters, or be the first to write a blog."
+              ocid="blog.empty_state"
             />
           ) : (
             <>

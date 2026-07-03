@@ -1,7 +1,9 @@
+import { ContentType } from "@/backend";
 import type { BlogView, NoteView, Video } from "@/backend";
 import { ContentCard } from "@/components/shared/ContentCard";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { LoadingState } from "@/components/shared/LoadingState";
+import { TrendingSection } from "@/components/shared/TrendingSection";
 import { Button } from "@/components/ui/button";
 import {
   BlogSort,
@@ -9,14 +11,16 @@ import {
   VideoSort,
   useBlogs,
   useNotes,
+  useTrending,
   useVideos,
 } from "@/hooks/useQueries";
-import type { ContentCardItem } from "@/types";
+import type { ContentCardItem, ContentKind, TrendingItem } from "@/types";
 import { Link } from "@tanstack/react-router";
 import {
   ArrowRight,
   BookOpen,
   FileText,
+  Flame,
   PlayCircle,
   Sparkles,
 } from "lucide-react";
@@ -182,6 +186,75 @@ function SectionHeading({
 }
 
 /* ------------------------------------------------------------------ */
+/* Trending                                                            */
+/* ------------------------------------------------------------------ */
+
+function contentTypeToKind(ct: ContentType): ContentKind {
+  if (ct === ContentType.video) return "video";
+  if (ct === ContentType.blog) return "blog";
+  return "note";
+}
+
+/** Map a backend TrendingItem to a ContentCardItem for the TrendingSection. */
+function trendingToCard(t: TrendingItem): ContentCardItem {
+  return {
+    id: t.contentRef.id,
+    kind: contentTypeToKind(t.contentRef.contentType),
+    title: t.contentRef.title,
+    excerpt: "",
+    author: t.contentRef.author.toText().slice(0, 8),
+    createdAt: 0n,
+    likeCount: t.likes,
+    viewCount: t.views,
+  };
+}
+
+function TrendingFeedSection() {
+  const trending = useTrending(6);
+  const items = (trending.data ?? []).map(trendingToCard);
+
+  return (
+    <section
+      className="bg-muted/30"
+      aria-label="Trending content on Atlas Learning Hub"
+    >
+      <div className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6">
+        <SectionHeading
+          title="Trending now"
+          description="The most-viewed and liked content across Atlas right now."
+          viewAllHref="/search?sort=trending"
+          viewAllLabel="See more"
+        />
+
+        {trending.isLoading ? (
+          <LoadingState
+            variant="grid"
+            count={6}
+            ocid="home.trending.loading_state"
+          />
+        ) : items.length === 0 ? (
+          <EmptyState
+            icon={Flame}
+            title="No trending content yet"
+            description="Once the community starts viewing and liking content, the hottest picks will show up here."
+            ocid="home.trending.empty_state"
+          />
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+          >
+            <TrendingSection items={items} ocid="home.trending" />
+          </motion.div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Featured content                                                    */
 /* ------------------------------------------------------------------ */
 
@@ -263,6 +336,7 @@ export default function HomePage() {
   return (
     <div className="flex flex-col">
       <Hero />
+      <TrendingFeedSection />
       <FeaturedSection />
     </div>
   );

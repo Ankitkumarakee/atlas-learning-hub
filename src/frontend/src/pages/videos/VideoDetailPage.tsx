@@ -1,7 +1,9 @@
+import { ContentType } from "@/backend";
 import { BookmarkButton } from "@/components/shared/BookmarkButton";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { LikeButton } from "@/components/shared/LikeButton";
 import { LoadingState } from "@/components/shared/LoadingState";
+import { RelatedContentSection } from "@/components/shared/RelatedContentSection";
 import { VideoPlayer } from "@/components/shared/VideoPlayer";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +11,12 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/useAuth";
 import { useBackend } from "@/hooks/useBackend";
-import { useIncrementView, useVideo } from "@/hooks/useQueries";
+import {
+  useIncrementView,
+  useRelatedContent,
+  useVideo,
+} from "@/hooks/useQueries";
+import { recommendationsToCardItems } from "@/lib/recommendations";
 import type { Video } from "@/types";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import {
@@ -74,6 +81,11 @@ export default function VideoDetailPage() {
   const incrementView = useIncrementView();
 
   const { data: video, isLoading } = useVideo(videoId);
+  const relatedQuery = useRelatedContent(ContentType.video, videoId, 4);
+  const relatedItems = relatedQuery.data
+    ? recommendationsToCardItems(relatedQuery.data)
+    : [];
+  const relatedLoading = relatedQuery.isLoading;
 
   const [liked, setLiked] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
@@ -426,6 +438,37 @@ export default function VideoDetailPage() {
             </motion.div>
           </aside>
         </div>
+
+        {/* Related content zone */}
+        {relatedLoading ? (
+          <section
+            aria-label="Related content"
+            className="mt-8 border-t border-border bg-background pt-8"
+          >
+            <h2 className="font-display text-xl font-semibold text-foreground">
+              Related content
+            </h2>
+            <div className="mt-6">
+              <LoadingState
+                variant="grid"
+                count={4}
+                ocid="video.related.loading_state"
+              />
+            </div>
+          </section>
+        ) : relatedItems.length > 0 ? (
+          <section
+            aria-label="Related content"
+            className="mt-8 border-t border-border bg-background pt-8"
+          >
+            <RelatedContentSection
+              title="Related content"
+              items={relatedItems}
+              layout="grid"
+              ocid="video.related"
+            />
+          </section>
+        ) : null}
       </div>
     </div>
   );

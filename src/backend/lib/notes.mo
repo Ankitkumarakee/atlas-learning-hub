@@ -148,6 +148,10 @@ module {
     let sorted = filtered.sort(func(a, b) {
       switch (q.sort) {
         case (?#mostDownloaded) { Nat.compare(b.downloadCount, a.downloadCount) };
+        case (?#mostLiked) { Nat.compare(b.likeCount, a.likeCount) };
+        // Bookmark set is not threaded into listNotes; fall back to
+        // downloadCount as the closest available engagement proxy.
+        case (?#mostBookmarked) { Nat.compare(b.downloadCount, a.downloadCount) };
         case (?#newest) { Nat.compare(b.createdAt, a.createdAt) };
         case null { Nat.compare(b.createdAt, a.createdAt) };
       };

@@ -107,6 +107,8 @@ module {
   public type BlogSort = {
     #newest;
     #mostLiked;
+    #mostViewed;
+    #mostBookmarked;
   };
 
   // Filter + pagination input for listBlogs.

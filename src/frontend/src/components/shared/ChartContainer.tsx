@@ -247,7 +247,6 @@ function renderChart({
         paddingAngle={2}
       >
         {pieData.map((_, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: pie slice has no stable id
           <Cell key={`cell-${i}`} fill={palette[i % palette.length]} />
         ))}
       </Pie>

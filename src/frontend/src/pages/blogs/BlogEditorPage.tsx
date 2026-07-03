@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/useAuth";
 import { useBlog, useCreateBlog, useUpdateBlog } from "@/hooks/useQueries";
 import { ArrowLeft, Lock, Save } from "lucide-react";
+import { toast } from "sonner";
 
 const quillModules = {
   toolbar: [
@@ -132,12 +133,24 @@ export default function BlogEditorPage() {
       published,
     };
 
-    if (isEditMode && blogId) {
-      await updateMut.mutateAsync({ id: blogId, ...payload });
-    } else {
-      await createMut.mutateAsync(payload);
+    try {
+      if (isEditMode && blogId) {
+        await updateMut.mutateAsync({ id: blogId, ...payload });
+        toast.success("Blog updated.");
+      } else {
+        await createMut.mutateAsync(payload);
+        toast.success(published ? "Blog published." : "Draft saved.");
+      }
+      navigate({ to: "/blogs" });
+    } catch (err) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : isEditMode
+            ? "Couldn't save changes."
+            : "Couldn't publish blog.",
+      );
     }
-    navigate({ to: "/blogs" });
   };
 
   return (

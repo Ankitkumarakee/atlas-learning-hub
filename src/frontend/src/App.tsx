@@ -7,6 +7,7 @@ import BlogDetailPage from "@/pages/blogs/BlogDetailPage";
 import BlogEditorPage from "@/pages/blogs/BlogEditorPage";
 import BlogListPage from "@/pages/blogs/BlogListPage";
 import AdminDashboardPage from "@/pages/dashboards/AdminDashboardPage";
+import CreatorDashboardPage from "@/pages/dashboards/CreatorDashboardPage";
 import StudentDashboardPage from "@/pages/dashboards/StudentDashboardPage";
 import NoteDetailPage from "@/pages/notes/NoteDetailPage";
 import NoteListPage from "@/pages/notes/NoteListPage";
@@ -120,16 +121,7 @@ const tutorConversationRoute = createRoute({
 const creatorDashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/dashboard/creator",
-  component: () => (
-    <section className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6">
-      <h1 className="font-display text-4xl font-semibold tracking-tight">
-        Creator dashboard
-      </h1>
-      <p className="mt-3 max-w-2xl text-muted-foreground">
-        Your content performance and engagement.
-      </p>
-    </section>
-  ),
+  component: CreatorDashboardPage,
 });
 
 const studentDashboardRoute = createRoute({
@@ -159,8 +151,30 @@ const profileByIdRoute = createRoute({
 const searchRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/search",
-  validateSearch: (search: Record<string, unknown>): { q?: string } => ({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): {
+    q?: string;
+    type?: "all" | "blog" | "note" | "video";
+    sort?: "newest" | "mostViewed" | "mostLiked" | "mostBookmarked";
+  } => ({
     q: typeof search.q === "string" ? search.q : undefined,
+    type:
+      typeof search.type === "string" &&
+      ["all", "blog", "note", "video"].includes(search.type)
+        ? (search.type as "all" | "blog" | "note" | "video")
+        : undefined,
+    sort:
+      typeof search.sort === "string" &&
+      ["newest", "mostViewed", "mostLiked", "mostBookmarked"].includes(
+        search.sort,
+      )
+        ? (search.sort as
+            | "newest"
+            | "mostViewed"
+            | "mostLiked"
+            | "mostBookmarked")
+        : undefined,
   }),
   component: SearchPage,
 });

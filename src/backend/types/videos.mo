@@ -6,6 +6,8 @@ module {
   public type VideoSort = {
     #newest;
     #mostViewed;
+    #mostLiked;
+    #mostBookmarked;
   };
 
   public type VideoFilter = {

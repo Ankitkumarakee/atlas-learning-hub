@@ -135,6 +135,24 @@ module {
     let sorted = videosOnly.sort(func(a, b) {
       switch (filter.sort) {
         case (?#mostViewed) { Nat.compare(b.viewCount, a.viewCount) };
+        case (?#mostLiked) { Nat.compare(b.likeCount, a.likeCount) };
+        // Count bookmarks per video by iterating store.bookmarks
+        // (Map<Principal, Set<VideoId>>). Build a per-id count map once,
+        // then compare by real bookmark counts.
+        case (?#mostBookmarked) {
+          let counts = Map.empty<Types.VideoId, Nat>();
+          for ((user, ids) in store.bookmarks.entries()) {
+            for (id in ids.values()) {
+              switch (counts.get(id)) {
+                case (?c) { counts.add(id, c + 1) };
+                case null { counts.add(id, 1) };
+              };
+            };
+          };
+          let ca = switch (counts.get(a.id)) { case (?c) { c }; case null { 0 } };
+          let cb = switch (counts.get(b.id)) { case (?c) { c }; case null { 0 } };
+          Nat.compare(cb, ca);
+        };
         case (?#newest) { Int.compare(b.createdAt, a.createdAt) };
         case null { Int.compare(b.createdAt, a.createdAt) };
       };

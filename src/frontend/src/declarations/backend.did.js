@@ -214,6 +214,7 @@ export const UserStatus = IDL.Variant({
 export const UserManagementItem = IDL.Record({
   'id' : IDL.Principal,
   'status' : UserStatus,
+  'contentCount' : IDL.Nat,
   'name' : IDL.Text,
   'createdAt' : Timestamp,
   'role' : UserRole__1,
@@ -231,8 +232,24 @@ export const ContentPerformanceItem = IDL.Record({
   'trend' : IDL.Int,
   'contentType' : ContentType,
   'views' : IDL.Nat,
+  'likes' : IDL.Nat,
+  'comments' : IDL.Nat,
 });
-export const DatePoint = IDL.Record({ 'date' : IDL.Text, 'count' : IDL.Nat });
+export const CreatorViewsByTypePoint = IDL.Record({
+  'videoViews' : IDL.Nat,
+  'date' : IDL.Text,
+  'noteViews' : IDL.Nat,
+  'blogViews' : IDL.Nat,
+});
+export const RecentCommentItem = IDL.Record({
+  'contentId' : IDL.Nat,
+  'content' : IDL.Text,
+  'commentId' : IDL.Nat,
+  'contentType' : ContentType,
+  'createdAt' : Timestamp,
+  'author' : IDL.Principal,
+  'contentTitle' : IDL.Text,
+});
 export const EngagementByType = IDL.Record({
   'contentType' : ContentType,
   'bookmarks' : IDL.Nat,
@@ -247,9 +264,24 @@ export const CreatorTotals = IDL.Record({
 });
 export const CreatorDashboard = IDL.Record({
   'contentPerformance' : IDL.Vec(ContentPerformanceItem),
-  'viewsOverTime' : IDL.Vec(DatePoint),
+  'viewsOverTime' : IDL.Vec(CreatorViewsByTypePoint),
+  'recentComments' : IDL.Vec(RecentCommentItem),
   'engagementByType' : IDL.Vec(EngagementByType),
   'totals' : CreatorTotals,
+});
+export const Recommendation = IDL.Record({
+  'contentRef' : IDL.Record({
+    'id' : IDL.Nat,
+    'title' : IDL.Text,
+    'contentType' : IDL.Variant({
+      'video' : IDL.Null,
+      'blog' : IDL.Null,
+      'note' : IDL.Null,
+    }),
+    'author' : IDL.Principal,
+  }),
+  'score' : IDL.Float64,
+  'reason' : IDL.Text,
 });
 export const BookmarkItem = IDL.Record({
   'content' : ContentRef,
@@ -266,15 +298,38 @@ export const StudentTotals = IDL.Record({
   'likedContentCount' : IDL.Nat,
   'bookmarksCount' : IDL.Nat,
 });
+export const StudentActivityPoint = IDL.Record({
+  'date' : IDL.Text,
+  'bookmarks' : IDL.Nat,
+  'likes' : IDL.Nat,
+  'aiSessions' : IDL.Nat,
+});
 export const StudentDashboard = IDL.Record({
   'bookmarks' : IDL.Vec(BookmarkItem),
   'recentAIConversations' : IDL.Vec(AIConversationSummary),
   'totals' : StudentTotals,
-  'learningActivityOverTime' : IDL.Vec(DatePoint),
+  'learningActivityOverTime' : IDL.Vec(StudentActivityPoint),
+});
+export const TrendingItem = IDL.Record({
+  'views' : IDL.Nat,
+  'contentRef' : IDL.Record({
+    'id' : IDL.Nat,
+    'title' : IDL.Text,
+    'contentType' : IDL.Variant({
+      'video' : IDL.Null,
+      'blog' : IDL.Null,
+      'note' : IDL.Null,
+    }),
+    'author' : IDL.Principal,
+  }),
+  'likes' : IDL.Nat,
+  'score' : IDL.Float64,
 });
 export const BlogSort = IDL.Variant({
+  'mostBookmarked' : IDL.Null,
   'newest' : IDL.Null,
   'mostLiked' : IDL.Null,
+  'mostViewed' : IDL.Null,
 });
 export const ListBlogsQuery = IDL.Record({
   'tag' : IDL.Opt(IDL.Text),
@@ -290,8 +345,10 @@ export const ListBlogsResult = IDL.Record({
   'items' : IDL.Vec(BlogView),
 });
 export const NoteSort = IDL.Variant({
+  'mostBookmarked' : IDL.Null,
   'mostDownloaded' : IDL.Null,
   'newest' : IDL.Null,
+  'mostLiked' : IDL.Null,
 });
 export const NoteListQuery = IDL.Record({
   'subject' : IDL.Opt(IDL.Text),
@@ -322,7 +379,9 @@ export const ListNotificationsResult = IDL.Record({
   'items' : IDL.Vec(NotificationView),
 });
 export const VideoSort = IDL.Variant({
+  'mostBookmarked' : IDL.Null,
   'newest' : IDL.Null,
+  'mostLiked' : IDL.Null,
   'mostViewed' : IDL.Null,
 });
 export const VideoFilter = IDL.Record({
@@ -452,7 +511,21 @@ export const idlService = IDL.Service({
   'getCreatorDashboard' : IDL.Func([], [CreatorDashboard], []),
   'getMessages' : IDL.Func([IDL.Nat], [IDL.Vec(Message)], []),
   'getNote' : IDL.Func([IDL.Nat], [IDL.Opt(NoteView)], ['query']),
+  'getRelatedContent' : IDL.Func(
+      [
+        IDL.Variant({
+          'video' : IDL.Null,
+          'blog' : IDL.Null,
+          'note' : IDL.Null,
+        }),
+        IDL.Nat,
+        IDL.Nat,
+      ],
+      [IDL.Vec(Recommendation)],
+      ['query'],
+    ),
   'getStudentDashboard' : IDL.Func([], [StudentDashboard], []),
+  'getTrending' : IDL.Func([IDL.Nat], [IDL.Vec(TrendingItem)], ['query']),
   'getVideo' : IDL.Func([VideoId], [IDL.Opt(Video)], ['query']),
   'hideContent' : IDL.Func([ModerationTarget], [], []),
   'incrementDownload' : IDL.Func([IDL.Nat], [], []),
@@ -710,6 +783,7 @@ export const idlFactory = ({ IDL }) => {
   const UserManagementItem = IDL.Record({
     'id' : IDL.Principal,
     'status' : UserStatus,
+    'contentCount' : IDL.Nat,
     'name' : IDL.Text,
     'createdAt' : Timestamp,
     'role' : UserRole__1,
@@ -727,8 +801,24 @@ export const idlFactory = ({ IDL }) => {
     'trend' : IDL.Int,
     'contentType' : ContentType,
     'views' : IDL.Nat,
+    'likes' : IDL.Nat,
+    'comments' : IDL.Nat,
   });
-  const DatePoint = IDL.Record({ 'date' : IDL.Text, 'count' : IDL.Nat });
+  const CreatorViewsByTypePoint = IDL.Record({
+    'videoViews' : IDL.Nat,
+    'date' : IDL.Text,
+    'noteViews' : IDL.Nat,
+    'blogViews' : IDL.Nat,
+  });
+  const RecentCommentItem = IDL.Record({
+    'contentId' : IDL.Nat,
+    'content' : IDL.Text,
+    'commentId' : IDL.Nat,
+    'contentType' : ContentType,
+    'createdAt' : Timestamp,
+    'author' : IDL.Principal,
+    'contentTitle' : IDL.Text,
+  });
   const EngagementByType = IDL.Record({
     'contentType' : ContentType,
     'bookmarks' : IDL.Nat,
@@ -743,9 +833,24 @@ export const idlFactory = ({ IDL }) => {
   });
   const CreatorDashboard = IDL.Record({
     'contentPerformance' : IDL.Vec(ContentPerformanceItem),
-    'viewsOverTime' : IDL.Vec(DatePoint),
+    'viewsOverTime' : IDL.Vec(CreatorViewsByTypePoint),
+    'recentComments' : IDL.Vec(RecentCommentItem),
     'engagementByType' : IDL.Vec(EngagementByType),
     'totals' : CreatorTotals,
+  });
+  const Recommendation = IDL.Record({
+    'contentRef' : IDL.Record({
+      'id' : IDL.Nat,
+      'title' : IDL.Text,
+      'contentType' : IDL.Variant({
+        'video' : IDL.Null,
+        'blog' : IDL.Null,
+        'note' : IDL.Null,
+      }),
+      'author' : IDL.Principal,
+    }),
+    'score' : IDL.Float64,
+    'reason' : IDL.Text,
   });
   const BookmarkItem = IDL.Record({
     'content' : ContentRef,
@@ -762,13 +867,39 @@ export const idlFactory = ({ IDL }) => {
     'likedContentCount' : IDL.Nat,
     'bookmarksCount' : IDL.Nat,
   });
+  const StudentActivityPoint = IDL.Record({
+    'date' : IDL.Text,
+    'bookmarks' : IDL.Nat,
+    'likes' : IDL.Nat,
+    'aiSessions' : IDL.Nat,
+  });
   const StudentDashboard = IDL.Record({
     'bookmarks' : IDL.Vec(BookmarkItem),
     'recentAIConversations' : IDL.Vec(AIConversationSummary),
     'totals' : StudentTotals,
-    'learningActivityOverTime' : IDL.Vec(DatePoint),
+    'learningActivityOverTime' : IDL.Vec(StudentActivityPoint),
   });
-  const BlogSort = IDL.Variant({ 'newest' : IDL.Null, 'mostLiked' : IDL.Null });
+  const TrendingItem = IDL.Record({
+    'views' : IDL.Nat,
+    'contentRef' : IDL.Record({
+      'id' : IDL.Nat,
+      'title' : IDL.Text,
+      'contentType' : IDL.Variant({
+        'video' : IDL.Null,
+        'blog' : IDL.Null,
+        'note' : IDL.Null,
+      }),
+      'author' : IDL.Principal,
+    }),
+    'likes' : IDL.Nat,
+    'score' : IDL.Float64,
+  });
+  const BlogSort = IDL.Variant({
+    'mostBookmarked' : IDL.Null,
+    'newest' : IDL.Null,
+    'mostLiked' : IDL.Null,
+    'mostViewed' : IDL.Null,
+  });
   const ListBlogsQuery = IDL.Record({
     'tag' : IDL.Opt(IDL.Text),
     'page' : IDL.Nat,
@@ -783,8 +914,10 @@ export const idlFactory = ({ IDL }) => {
     'items' : IDL.Vec(BlogView),
   });
   const NoteSort = IDL.Variant({
+    'mostBookmarked' : IDL.Null,
     'mostDownloaded' : IDL.Null,
     'newest' : IDL.Null,
+    'mostLiked' : IDL.Null,
   });
   const NoteListQuery = IDL.Record({
     'subject' : IDL.Opt(IDL.Text),
@@ -815,7 +948,9 @@ export const idlFactory = ({ IDL }) => {
     'items' : IDL.Vec(NotificationView),
   });
   const VideoSort = IDL.Variant({
+    'mostBookmarked' : IDL.Null,
     'newest' : IDL.Null,
+    'mostLiked' : IDL.Null,
     'mostViewed' : IDL.Null,
   });
   const VideoFilter = IDL.Record({
@@ -945,7 +1080,21 @@ export const idlFactory = ({ IDL }) => {
     'getCreatorDashboard' : IDL.Func([], [CreatorDashboard], []),
     'getMessages' : IDL.Func([IDL.Nat], [IDL.Vec(Message)], []),
     'getNote' : IDL.Func([IDL.Nat], [IDL.Opt(NoteView)], ['query']),
+    'getRelatedContent' : IDL.Func(
+        [
+          IDL.Variant({
+            'video' : IDL.Null,
+            'blog' : IDL.Null,
+            'note' : IDL.Null,
+          }),
+          IDL.Nat,
+          IDL.Nat,
+        ],
+        [IDL.Vec(Recommendation)],
+        ['query'],
+      ),
     'getStudentDashboard' : IDL.Func([], [StudentDashboard], []),
+    'getTrending' : IDL.Func([IDL.Nat], [IDL.Vec(TrendingItem)], ['query']),
     'getVideo' : IDL.Func([VideoId], [IDL.Opt(Video)], ['query']),
     'hideContent' : IDL.Func([ModerationTarget], [], []),
     'incrementDownload' : IDL.Func([IDL.Nat], [], []),

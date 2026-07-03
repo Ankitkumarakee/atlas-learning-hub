@@ -9,6 +9,8 @@ type VideoUpdate =
  };
 type VideoSort = 
  variant {
+   mostBookmarked;
+   mostLiked;
    mostViewed;
    newest;
  };
@@ -76,6 +78,7 @@ type UserRole =
  };
 type UserManagementItem = 
  record {
+   contentCount: nat;
    createdAt: Timestamp;
    id: principal;
    name: text;
@@ -83,6 +86,23 @@ type UserManagementItem =
    status: UserStatus;
  };
 type UserId = principal;
+type TrendingItem = 
+ record {
+   contentRef:
+    record {
+      author: principal;
+      contentType: variant {
+                     blog;
+                     note;
+                     video;
+                   };
+      id: nat;
+      title: text;
+    };
+   likes: nat;
+   score: float64;
+   views: nat;
+ };
 type TransformationOutput = 
  record {
    body: blob;
@@ -104,9 +124,16 @@ type StudentTotals =
 type StudentDashboard = 
  record {
    bookmarks: vec BookmarkItem;
-   learningActivityOverTime: vec DatePoint;
+   learningActivityOverTime: vec StudentActivityPoint;
    recentAIConversations: vec AIConversationSummary;
    totals: StudentTotals;
+ };
+type StudentActivityPoint = 
+ record {
+   aiSessions: nat;
+   bookmarks: nat;
+   date: text;
+   likes: nat;
  };
 type SourceType = 
  variant {
@@ -134,6 +161,32 @@ type Result =
  variant {
    err: Error;
    ok;
+ };
+type Recommendation = 
+ record {
+   contentRef:
+    record {
+      author: principal;
+      contentType: variant {
+                     blog;
+                     note;
+                     video;
+                   };
+      id: nat;
+      title: text;
+    };
+   reason: text;
+   score: float64;
+ };
+type RecentCommentItem = 
+ record {
+   author: principal;
+   commentId: nat;
+   content: text;
+   contentId: nat;
+   contentTitle: text;
+   contentType: ContentType;
+   createdAt: Timestamp;
  };
 type PlatformGrowthPoint = 
  record {
@@ -188,7 +241,9 @@ type NoteUpdate =
  };
 type NoteSort = 
  variant {
+   mostBookmarked;
    mostDownloaded;
+   mostLiked;
    newest;
  };
 type NoteListResult = 
@@ -316,10 +371,12 @@ type EngagementByType =
    contentType: ContentType;
    likes: nat;
  };
-type DatePoint = 
+type CreatorViewsByTypePoint = 
  record {
-   count: nat;
+   blogViews: nat;
    date: text;
+   noteViews: nat;
+   videoViews: nat;
  };
 type CreatorTotals = 
  record {
@@ -332,8 +389,9 @@ type CreatorDashboard =
  record {
    contentPerformance: vec ContentPerformanceItem;
    engagementByType: vec EngagementByType;
+   recentComments: vec RecentCommentItem;
    totals: CreatorTotals;
-   viewsOverTime: vec DatePoint;
+   viewsOverTime: vec CreatorViewsByTypePoint;
  };
 type Conversation = 
  record {
@@ -358,8 +416,10 @@ type ContentRef =
  };
 type ContentPerformanceItem = 
  record {
+   comments: nat;
    contentType: ContentType;
    id: nat;
+   likes: nat;
    title: text;
    trend: int;
    views: nat;
@@ -404,7 +464,9 @@ type BlogView =
  };
 type BlogSort = 
  variant {
+   mostBookmarked;
    mostLiked;
+   mostViewed;
    newest;
  };
 type BlogId = nat;
@@ -482,7 +544,14 @@ service : {
   getCreatorDashboard: () -> (CreatorDashboard);
   getMessages: (conversationId: nat) -> (vec Message);
   getNote: (id: nat) -> (opt NoteView) query;
+  getRelatedContent: (contentType: variant {
+                                     blog;
+                                     note;
+                                     video;
+                                   }, contentId: nat, limit: nat) ->
+   (vec Recommendation) query;
   getStudentDashboard: () -> (StudentDashboard);
+  getTrending: (limit: nat) -> (vec TrendingItem) query;
   getVideo: (id: VideoId) -> (opt Video) query;
   hideContent: (target: ModerationTarget) -> ();
   incrementDownload: (id: nat) -> ();

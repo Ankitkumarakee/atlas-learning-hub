@@ -1,10 +1,25 @@
 import type { BlogView, NoteView, Video } from "@/backend";
 import { ContentCard } from "@/components/shared/ContentCard";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorState } from "@/components/shared/ErrorState";
 import { LoadingState } from "@/components/shared/LoadingState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useBlogs, useNotes, useVideos } from "@/hooks/useQueries";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  BlogSort,
+  NoteSort,
+  VideoSort,
+  useBlogs,
+  useNotes,
+  useVideos,
+} from "@/hooks/useQueries";
 import type { ContentCardItem, ContentKind } from "@/types";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import {
@@ -66,7 +81,7 @@ function videoToCard(v: Video): ContentCardItem {
 }
 
 /* ------------------------------------------------------------------ */
-/* Filter chips                                                       */
+/* Filter + sort config                                               */
 /* ------------------------------------------------------------------ */
 
 type Filter = "all" | ContentKind;
@@ -78,15 +93,78 @@ const FILTERS: { value: Filter; label: string; icon: typeof BookOpen }[] = [
   { value: "video", label: "Videos", icon: PlayCircle },
 ];
 
+/** Unified sort options surfaced in the UI. */
+type SortKey = "newest" | "mostViewed" | "mostLiked" | "mostBookmarked";
+
+const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+  { value: "newest", label: "Newest" },
+  { value: "mostViewed", label: "Most viewed" },
+  { value: "mostLiked", label: "Most liked" },
+  { value: "mostBookmarked", label: "Most bookmarked" },
+];
+
+const DEFAULT_SORT: SortKey = "newest";
+const DEFAULT_FILTER: Filter = "all";
+
+/**
+ * Map the unified sort key to each content type's backend enum.
+ * Notes have no "mostViewed" — fall back to "mostDownloaded" (the closest
+ * engagement signal for downloadable notes).
+ */
+function blogSortFor(key: SortKey): BlogSort {
+  switch (key) {
+    case "mostViewed":
+      return BlogSort.mostViewed;
+    case "mostLiked":
+      return BlogSort.mostLiked;
+    case "mostBookmarked":
+      return BlogSort.mostBookmarked;
+    default:
+      return BlogSort.newest;
+  }
+}
+
+function noteSortFor(key: SortKey): NoteSort {
+  switch (key) {
+    case "mostViewed":
+      return NoteSort.mostDownloaded;
+    case "mostLiked":
+      return NoteSort.mostLiked;
+    case "mostBookmarked":
+      return NoteSort.mostBookmarked;
+    default:
+      return NoteSort.newest;
+  }
+}
+
+function videoSortFor(key: SortKey): VideoSort {
+  switch (key) {
+    case "mostViewed":
+      return VideoSort.mostViewed;
+    case "mostLiked":
+      return VideoSort.mostLiked;
+    case "mostBookmarked":
+      return VideoSort.mostBookmarked;
+    default:
+      return VideoSort.newest;
+  }
+}
+
 /* ------------------------------------------------------------------ */
 /* Page                                                               */
 /* ------------------------------------------------------------------ */
 
 export default function SearchPage() {
-  const { q } = useSearch({ strict: false }) as { q?: string };
+  const { q, type, sort } = useSearch({ strict: false }) as {
+    q?: string;
+    type?: Filter;
+    sort?: SortKey;
+  };
   const navigate = useNavigate();
   const [input, setInput] = useState(q ?? "");
-  const [filter, setFilter] = useState<Filter>("all");
+
+  const filter: Filter = type ?? DEFAULT_FILTER;
+  const sortKey: SortKey = sort ?? DEFAULT_SORT;
 
   // Keep input in sync if URL changes (e.g. back/forward).
   useEffect(() => {
@@ -100,20 +178,24 @@ export default function SearchPage() {
     page: 0n,
     pageSize: 100n,
     search: hasQuery ? query : undefined,
+    sort: blogSortFor(sortKey),
   });
   const notes = useNotes({
     page: 0n,
     pageSize: 100n,
     search: hasQuery ? query : undefined,
+    sort: noteSortFor(sortKey),
   });
   const videos = useVideos({
     page: 0n,
     pageSize: 100n,
     search: hasQuery ? query : undefined,
+    sort: videoSortFor(sortKey),
   });
 
   const anyLoading =
     hasQuery && (blogs.isLoading || notes.isLoading || videos.isLoading);
+  const anyError = blogs.isError || notes.isError || videos.isError;
 
   const results = useMemo<ContentCardItem[]>(() => {
     if (!hasQuery) return [];
@@ -140,7 +222,38 @@ export default function SearchPage() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = input.trim();
-    navigate({ to: "/search", search: trimmed ? { q: trimmed } : {} });
+    navigate({
+      to: "/search",
+      search: trimmed ? { q: trimmed, type: filter, sort: sortKey } : {},
+    });
+  }
+
+  function updateFilter(next: Filter) {
+    navigate({
+      to: "/search",
+      search: (prev) => ({
+        q: prev?.q,
+        type: next === DEFAULT_FILTER ? undefined : next,
+        sort: sortKey === DEFAULT_SORT ? undefined : sortKey,
+      }),
+    });
+  }
+
+  function updateSort(next: SortKey) {
+    navigate({
+      to: "/search",
+      search: (prev) => ({
+        q: prev?.q,
+        type: filter === DEFAULT_FILTER ? undefined : filter,
+        sort: next === DEFAULT_SORT ? undefined : next,
+      }),
+    });
+  }
+
+  function retry() {
+    void blogs.refetch();
+    void notes.refetch();
+    void videos.refetch();
   }
 
   return (
@@ -179,35 +292,70 @@ export default function SearchPage() {
 
       {/* Results */}
       <section className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6">
-        {/* Filter chips */}
-        <div
-          className="mb-6 flex flex-wrap gap-2"
-          role="tablist"
-          aria-label="Filter by content type"
-        >
-          {FILTERS.map((f) => {
-            const count = f.value === "all" ? counts.all : counts[f.value];
-            const active = filter === f.value;
-            const Icon = f.icon;
-            return (
-              <Button
-                key={f.value}
-                type="button"
-                variant={active ? "default" : "outline"}
-                size="sm"
-                onClick={() => setFilter(f.value)}
-                aria-pressed={active}
-                role="tab"
-                data-ocid={`search.filter.${f.value}`}
+        {/* Filter chips + sort control */}
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div
+            className="flex flex-wrap gap-2"
+            role="tablist"
+            aria-label="Filter by content type"
+          >
+            {FILTERS.map((f) => {
+              const count = f.value === "all" ? counts.all : counts[f.value];
+              const active = filter === f.value;
+              const Icon = f.icon;
+              return (
+                <Button
+                  key={f.value}
+                  type="button"
+                  variant={active ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => updateFilter(f.value)}
+                  aria-pressed={active}
+                  role="tab"
+                  data-ocid={`search.filter.${f.value}`}
+                >
+                  <Icon className="mr-1.5 size-3.5" aria-hidden />
+                  {f.label}
+                  <span className="ml-1.5 text-xs text-muted-foreground">
+                    ({count})
+                  </span>
+                </Button>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label
+              htmlFor="search-sort"
+              className="text-sm text-muted-foreground"
+            >
+              Sort
+            </label>
+            <Select
+              value={sortKey}
+              onValueChange={(v) => updateSort(v as SortKey)}
+            >
+              <SelectTrigger
+                id="search-sort"
+                data-ocid="search.sort_select"
+                aria-label="Sort results"
+                className="w-[180px]"
               >
-                <Icon className="mr-1.5 size-3.5" aria-hidden />
-                {f.label}
-                <span className="ml-1.5 text-xs text-muted-foreground">
-                  ({count})
-                </span>
-              </Button>
-            );
-          })}
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                {SORT_OPTIONS.map((opt) => (
+                  <SelectItem
+                    key={opt.value}
+                    value={opt.value}
+                    data-ocid={`search.sort_option.${opt.value}`}
+                  >
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {!hasQuery ? (
@@ -216,6 +364,14 @@ export default function SearchPage() {
             title="Start your search"
             description="Enter a query above to find blogs, notes, and videos."
             ocid="search.empty_state"
+          />
+        ) : anyError ? (
+          <ErrorState
+            title="Search failed"
+            message="We couldn't load search results. Please try again."
+            retryLabel="Retry"
+            onRetry={retry}
+            ocid="search.error_state"
           />
         ) : anyLoading ? (
           <LoadingState variant="grid" count={6} ocid="search.loading_state" />

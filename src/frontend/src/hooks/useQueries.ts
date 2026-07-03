@@ -20,15 +20,16 @@ import {
   type NoteUpdate,
   type NoteView,
   type NotificationId,
+  type Recommendation,
   type SendMessageResult,
   type StudentDashboard,
+  type TrendingItem,
   type UserRole__1,
   type Video,
   type VideoFilter,
   type VideoId,
   type VideoInput,
   type VideoPage,
-  VideoSort,
   type VideoUpdate,
 } from "@/backend";
 import type { Principal } from "@icp-sdk/core/principal";
@@ -36,6 +37,20 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useBackend } from "./useBackend";
 
 const PAGE_SIZE = 9n;
+
+/**
+ * Local VideoSort enum. The backend exports `VideoSort` only as a variant type
+ * (not a runtime value) in `@/backend`, so we mirror the variant string values
+ * here. The Candid encoder uses string equality, so a local string enum with
+ * matching values works at runtime. Cast to the `VideoFilter["sort"]` variant
+ * type when building a `VideoFilter`.
+ */
+export enum VideoSort {
+  mostBookmarked = "mostBookmarked",
+  newest = "newest",
+  mostLiked = "mostLiked",
+  mostViewed = "mostViewed",
+}
 
 const defaultBlogQuery: ListBlogsQuery = {
   page: 0n,
@@ -52,7 +67,7 @@ const defaultNoteQuery: NoteListQuery = {
 const defaultVideoFilter: VideoFilter = {
   page: 0n,
   pageSize: PAGE_SIZE,
-  sort: VideoSort.newest,
+  sort: VideoSort.newest as VideoFilter["sort"],
 };
 
 /* ------------------------------------------------------------------ */
@@ -443,6 +458,39 @@ export function useIncrementView() {
 }
 
 /* ------------------------------------------------------------------ */
+/* Discovery: related content & trending                              */
+/* ------------------------------------------------------------------ */
+
+export function useRelatedContent(
+  contentType: ContentType,
+  contentId: bigint | undefined,
+  limit: number,
+) {
+  const { actor, isFetching } = useBackend();
+  return useQuery<Recommendation[]>({
+    queryKey: ["related-content", contentType, contentId?.toString(), limit],
+    queryFn: async () => {
+      if (!actor || contentId === undefined) return [];
+      return actor.getRelatedContent(contentType, contentId, limit);
+    },
+    enabled: !!actor && !isFetching && contentId !== undefined,
+  });
+}
+
+export function useTrending(limit: number) {
+  const { actor, isFetching } = useBackend();
+  return useQuery<TrendingItem[]>({
+    queryKey: ["trending", limit],
+    queryFn: async () => {
+      if (!actor) throw new Error("Actor not ready");
+      return actor.getTrending(limit);
+    },
+    enabled: !!actor && !isFetching,
+    staleTime: 60_000,
+  });
+}
+
+/* ------------------------------------------------------------------ */
 /* AI Tutor conversations                                             */
 /* ------------------------------------------------------------------ */
 
@@ -695,4 +743,4 @@ export function useAssignRole() {
 }
 
 /* Re-export enums so pages can build query objects without importing backend. */
-export { BlogSort, NoteSort, VideoSort, ContentType };
+export { BlogSort, ContentType, NoteSort };

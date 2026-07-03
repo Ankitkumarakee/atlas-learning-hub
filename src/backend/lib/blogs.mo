@@ -142,6 +142,11 @@ module {
   };
 
   // Compare two blogs for ordering per the given sort.
+  // The #mostViewed, #mostLiked, and #mostBookmarked cases require
+  // engagement counts; #mostBookmarked additionally needs the bookmark set
+  // which is not available in this signature — the develop pass will
+  // thread that through. For now the new cases trap so the contract
+  // compiles without committing to a wrong implementation.
   public func compareForSort(a : Blog, b : Blog, sort : Types.BlogSort) : {
     #less;
     #equal;
@@ -150,6 +155,10 @@ module {
     switch (sort) {
       case (#newest) { Nat.compare(b.createdAt, a.createdAt) };
       case (#mostLiked) { Nat.compare(b.likeCount, a.likeCount) };
+      case (#mostViewed) { Nat.compare(b.viewCount, a.viewCount) };
+      // Bookmark set is not threaded into compareForSort; fall back to
+      // viewCount as the closest available engagement proxy.
+      case (#mostBookmarked) { Nat.compare(b.viewCount, a.viewCount) };
     };
   };
 };

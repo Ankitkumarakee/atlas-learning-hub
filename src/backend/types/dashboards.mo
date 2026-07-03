@@ -2,9 +2,9 @@ module {
   /// Cross-cutting timestamp type (nanoseconds since epoch, matching Time.now()).
   public type Timestamp = Nat;
 
-  /// A single day bucket used by all over-time chart series.
-  /// `date` is the day key (e.g. YYYYMMDD as a Text label); `count` is the
-  /// aggregated value for that day.
+  /// A single day bucket used by over-time chart series.
+  /// `date` is the day label (e.g. "2026-07-03"); `count` is the aggregated
+  /// value for that day.
   public type DatePoint = {
     date : Text; // day label, e.g. "2026-07-03"
     count : Nat;
@@ -46,26 +46,53 @@ module {
     bookmarks : Nat;
   };
 
-  /// A top-performing content item for the creator, with a trend indicator.
+  /// Per-day view counts broken down by content type for the creator views
+  /// chart. Each day carries blog/note/video counts so the chart can stack
+  /// or filter by type.
+  public type CreatorViewsByTypePoint = {
+    date : Text;
+    blogViews : Nat;
+    noteViews : Nat;
+    videoViews : Nat;
+  };
+
+  /// A top-performing content item for the creator, with engagement metrics
+  /// and a trend indicator.
   public type ContentPerformanceItem = {
     id : Nat;
     contentType : ContentType;
     title : Text;
     views : Nat;
+    likes : Nat;
+    comments : Nat;
     /// Trend vs the previous comparable period: positive = up, zero = flat,
     /// negative = down.
     trend : Int;
   };
 
+  /// A recent comment left on any of the creator's content, with a deep link
+  /// back to the source content.
+  public type RecentCommentItem = {
+    commentId : Nat;
+    contentType : ContentType;
+    contentId : Nat;
+    contentTitle : Text;
+    author : Principal;
+    content : Text;
+    createdAt : Timestamp;
+  };
+
   /// Full creator dashboard payload returned by getCreatorDashboard.
   public type CreatorDashboard = {
     totals : CreatorTotals;
-    /// Daily view counts for the last 30 days.
-    viewsOverTime : [DatePoint];
+    /// Daily view counts for the last 30 days, broken down by content type.
+    viewsOverTime : [CreatorViewsByTypePoint];
     /// Engagement split by content type (one entry per type).
     engagementByType : [EngagementByType];
-    /// Top content items ordered by views (descending).
+    /// Top content items ordered by engagement (descending).
     contentPerformance : [ContentPerformanceItem];
+    /// Recent comments across all of the creator's content.
+    recentComments : [RecentCommentItem];
   };
 
   // ---------------------------------------------------------------------------
@@ -93,11 +120,20 @@ module {
     messageCount : Nat;
   };
 
+  /// Per-day learning activity for the student, broken down by interaction
+  /// kind (bookmarks / likes / AI sessions) so the chart can stack or filter.
+  public type StudentActivityPoint = {
+    date : Text;
+    bookmarks : Nat;
+    likes : Nat;
+    aiSessions : Nat;
+  };
+
   /// Full student dashboard payload returned by getStudentDashboard.
   public type StudentDashboard = {
     totals : StudentTotals;
-    /// Daily interaction counts for the last 30 days.
-    learningActivityOverTime : [DatePoint];
+    /// Daily interaction counts for the last 30 days, broken down by kind.
+    learningActivityOverTime : [StudentActivityPoint];
     /// The student's bookmarks (mixed content types).
     bookmarks : [BookmarkItem];
     /// Most recent AI tutor conversations.
@@ -135,6 +171,8 @@ module {
     name : Text;
     role : UserRole;
     status : UserStatus;
+    /// Number of content items authored by this user across all types.
+    contentCount : Nat;
     createdAt : Timestamp;
   };
 

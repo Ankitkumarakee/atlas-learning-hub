@@ -15,6 +15,8 @@ module {
   public type NoteSort = {
     #newest;
     #mostDownloaded;
+    #mostLiked;
+    #mostBookmarked;
   };
 
   /// A note document uploaded by a creator. Internal stable record with

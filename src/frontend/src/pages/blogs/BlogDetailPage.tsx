@@ -1,8 +1,10 @@
+import { ContentType } from "@/backend";
 import { BookmarkButton } from "@/components/shared/BookmarkButton";
 import { CommentThread } from "@/components/shared/CommentThread";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { LikeButton } from "@/components/shared/LikeButton";
 import { LoadingState } from "@/components/shared/LoadingState";
+import { RelatedContentSection } from "@/components/shared/RelatedContentSection";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,9 +15,11 @@ import {
   useComments,
   useDeleteComment,
   useLikeBlog,
+  useRelatedContent,
   useUnbookmarkBlog,
   useUnlikeBlog,
 } from "@/hooks/useQueries";
+import { recommendationsToCardItems } from "@/lib/recommendations";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { ArrowLeft, Eye, FileX } from "lucide-react";
 import { useState } from "react";
@@ -32,6 +36,11 @@ export default function BlogDetailPage() {
   const commentsQuery = useComments(blogId);
   const comments = commentsQuery.data ?? [];
   const commentsLoading = commentsQuery.isLoading;
+  const relatedQuery = useRelatedContent(ContentType.blog, blogId, 4);
+  const relatedItems = relatedQuery.data
+    ? recommendationsToCardItems(relatedQuery.data)
+    : [];
+  const relatedLoading = relatedQuery.isLoading;
 
   const likeMut = useLikeBlog();
   const unlikeMut = useUnlikeBlog();
@@ -190,6 +199,41 @@ export default function BlogDetailPage() {
           </div>
         </div>
       </section>
+
+      {/* Related content zone */}
+      {relatedLoading ? (
+        <section
+          aria-label="Related content"
+          className="border-t border-border bg-background"
+        >
+          <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+            <h2 className="font-display text-xl font-semibold text-foreground">
+              Related content
+            </h2>
+            <div className="mt-6">
+              <LoadingState
+                variant="grid"
+                count={4}
+                ocid="blog.related.loading_state"
+              />
+            </div>
+          </div>
+        </section>
+      ) : relatedItems.length > 0 ? (
+        <section
+          aria-label="Related content"
+          className="border-t border-border bg-background"
+        >
+          <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+            <RelatedContentSection
+              title="Related content"
+              items={relatedItems}
+              layout="grid"
+              ocid="blog.related"
+            />
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

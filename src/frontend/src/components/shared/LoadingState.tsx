@@ -25,7 +25,6 @@ export function LoadingState({
         data-ocid={ocid}
       >
         {Array.from({ length: count }).map((_, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton, no item identity
           <div
             key={`loading-${i}`}
             className="space-y-3"
@@ -45,7 +44,6 @@ export function LoadingState({
     return (
       <div className={cn("space-y-3", className)} data-ocid={ocid}>
         {Array.from({ length: count }).map((_, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton, no item identity
           <Skeleton
             key={`loading-${i}`}
             className="h-24 w-full rounded-xl"
@@ -60,7 +58,6 @@ export function LoadingState({
     return (
       <div className={cn("space-y-2", className)} data-ocid={ocid}>
         {Array.from({ length: count }).map((_, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton, no item identity
           <Skeleton key={`loading-${i}`} className="h-4 w-full" />
         ))}
       </div>
@@ -70,7 +67,6 @@ export function LoadingState({
   return (
     <div className={cn("space-y-3", className)} data-ocid={ocid}>
       {Array.from({ length: count }).map((_, i) => (
-        // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton, no item identity
         <div
           key={`loading-${i}`}
           className="flex gap-3"

@@ -1,6 +1,7 @@
 import type { BlogView, NoteView, Video } from "@/backend";
 import { ContentCard } from "@/components/shared/ContentCard";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorState } from "@/components/shared/ErrorState";
 import { LoadingState } from "@/components/shared/LoadingState";
 import { RoleBadge } from "@/components/shared/RoleBadge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -88,6 +89,13 @@ export default function ProfilePage() {
   const videos = useVideos({ page: 0n, pageSize: 100n });
 
   const anyLoading = blogs.isLoading || notes.isLoading || videos.isLoading;
+  const anyError = blogs.isError || notes.isError || videos.isError;
+  const firstError = blogs.error ?? notes.error ?? videos.error ?? null;
+  const refetchAll = () => {
+    void blogs.refetch();
+    void notes.refetch();
+    void videos.refetch();
+  };
 
   const authored = useMemo(() => {
     if (!profileId) return { blogs: [], notes: [], videos: [] };
@@ -161,6 +169,18 @@ export default function ProfilePage() {
             variant="grid"
             count={6}
             ocid="profile.content.loading_state"
+          />
+        ) : anyError ? (
+          <ErrorState
+            title="Couldn't load profile content"
+            message={
+              firstError instanceof Error
+                ? firstError.message
+                : "We couldn't fetch this creator's content. Please try again."
+            }
+            retryLabel="Retry"
+            onRetry={refetchAll}
+            ocid="profile.content.error_state"
           />
         ) : totalCount === 0 ? (
           <EmptyState

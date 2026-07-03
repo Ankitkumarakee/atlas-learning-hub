@@ -96,6 +96,17 @@ export interface ContentPerformanceItem {
     trend: bigint;
     contentType: ContentType;
     views: bigint;
+    likes: bigint;
+    comments: bigint;
+}
+export interface RecentCommentItem {
+    contentId: bigint;
+    content: string;
+    commentId: bigint;
+    contentType: ContentType;
+    createdAt: Timestamp;
+    author: Principal;
+    contentTitle: string;
 }
 export type CommentId = bigint;
 export interface SourceContent {
@@ -164,7 +175,8 @@ export type Error_ = {
 };
 export interface CreatorDashboard {
     contentPerformance: Array<ContentPerformanceItem>;
-    viewsOverTime: Array<DatePoint>;
+    viewsOverTime: Array<CreatorViewsByTypePoint>;
+    recentComments: Array<RecentCommentItem>;
     engagementByType: Array<EngagementByType>;
     totals: CreatorTotals;
 }
@@ -191,6 +203,12 @@ export interface ListNotificationsResult {
     items: Array<NotificationView>;
 }
 export type NotificationId = bigint;
+export interface CreatorViewsByTypePoint {
+    videoViews: bigint;
+    date: string;
+    noteViews: bigint;
+    blogViews: bigint;
+}
 export interface Conversation {
     id: bigint;
     title: string;
@@ -230,16 +248,27 @@ export interface VideoPage {
     pageSize: bigint;
     items: Array<Video>;
 }
-export interface SourceReference {
-    title: string;
-    contentId: bigint;
-    sourceType: SourceType;
+export interface TrendingItem {
+    views: bigint;
+    contentRef: {
+        id: bigint;
+        title: string;
+        contentType: ContentType;
+        author: Principal;
+    };
+    likes: bigint;
+    score: number;
 }
 export interface StudentDashboard {
     bookmarks: Array<BookmarkItem>;
     recentAIConversations: Array<AIConversationSummary>;
     totals: StudentTotals;
-    learningActivityOverTime: Array<DatePoint>;
+    learningActivityOverTime: Array<StudentActivityPoint>;
+}
+export interface SourceReference {
+    title: string;
+    contentId: bigint;
+    sourceType: SourceType;
 }
 export interface ModerationTarget {
     id: bigint;
@@ -251,6 +280,16 @@ export interface TransformationInput {
 }
 export type BlogId = bigint;
 export type VideoId = bigint;
+export interface Recommendation {
+    contentRef: {
+        id: bigint;
+        title: string;
+        contentType: ContentType;
+        author: Principal;
+    };
+    score: number;
+    reason: string;
+}
 export interface NoteListQuery {
     subject?: string;
     page: bigint;
@@ -287,9 +326,11 @@ export interface SendMessageResult {
     message: Message;
     sources: Array<SourceReference>;
 }
-export interface DatePoint {
+export interface StudentActivityPoint {
     date: string;
-    count: bigint;
+    bookmarks: bigint;
+    likes: bigint;
+    aiSessions: bigint;
 }
 export interface CommentView {
     id: CommentId;
@@ -312,6 +353,7 @@ export interface NoteUpdate {
 export interface UserManagementItem {
     id: Principal;
     status: UserStatus;
+    contentCount: bigint;
     name: string;
     createdAt: Timestamp;
     role: UserRole__1;
@@ -352,8 +394,10 @@ export interface ContentRef {
     author: Principal;
 }
 export enum BlogSort {
+    mostBookmarked = "mostBookmarked",
     newest = "newest",
-    mostLiked = "mostLiked"
+    mostLiked = "mostLiked",
+    mostViewed = "mostViewed"
 }
 export enum ContentType {
     video = "video",
@@ -376,8 +420,10 @@ export enum NoteFileType {
     docx = "docx"
 }
 export enum NoteSort {
+    mostBookmarked = "mostBookmarked",
     mostDownloaded = "mostDownloaded",
-    newest = "newest"
+    newest = "newest",
+    mostLiked = "mostLiked"
 }
 export enum NotificationType {
     like = "like",
@@ -399,10 +445,6 @@ export enum UserRole__1 {
 export enum UserStatus {
     active = "active",
     suspended = "suspended"
-}
-export enum VideoSort {
-    newest = "newest",
-    mostViewed = "mostViewed"
 }
 export interface backendInterface {
     activateUser(user: Principal): Promise<void>;
@@ -431,7 +473,9 @@ export interface backendInterface {
     getCreatorDashboard(): Promise<CreatorDashboard>;
     getMessages(conversationId: bigint): Promise<Array<Message>>;
     getNote(id: bigint): Promise<NoteView | null>;
+    getRelatedContent(contentType: ContentType, contentId: bigint, limit: bigint): Promise<Array<Recommendation>>;
     getStudentDashboard(): Promise<StudentDashboard>;
+    getTrending(limit: bigint): Promise<Array<TrendingItem>>;
     getVideo(id: VideoId): Promise<Video | null>;
     hideContent(target: ModerationTarget): Promise<void>;
     incrementDownload(id: bigint): Promise<void>;

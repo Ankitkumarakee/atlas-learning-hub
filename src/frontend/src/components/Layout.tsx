@@ -79,7 +79,7 @@ function Logo() {
   return (
     <Link
       to="/"
-      className="flex items-center gap-2 font-display text-lg font-semibold tracking-tight transition-smooth hover:opacity-80"
+      className="focus-ring flex items-center gap-2 rounded-md font-display text-lg font-semibold tracking-tight transition-smooth hover:opacity-80"
       data-ocid="nav.logo_link"
     >
       <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
@@ -271,7 +271,7 @@ function MobileNav() {
                 key={link.to}
                 to={link.to}
                 onClick={() => setOpen(false)}
-                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
+                className="focus-ring flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
                 data-ocid={`nav.drawer.${link.label.toLowerCase()}_link`}
               >
                 <Icon className="size-4 text-muted-foreground" aria-hidden />
@@ -289,7 +289,7 @@ function MobileNav() {
                 <Link
                   to="/dashboard/creator"
                   onClick={() => setOpen(false)}
-                  className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
+                  className="focus-ring flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
                   data-ocid="nav.drawer.dashboard_creator_link"
                 >
                   <PenSquare
@@ -302,7 +302,7 @@ function MobileNav() {
               <Link
                 to="/dashboard/student"
                 onClick={() => setOpen(false)}
-                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
+                className="focus-ring flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
                 data-ocid="nav.drawer.dashboard_student_link"
               >
                 <BookOpen
@@ -315,7 +315,7 @@ function MobileNav() {
                 <Link
                   to="/dashboard/admin"
                   onClick={() => setOpen(false)}
-                  className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
+                  className="focus-ring flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
                   data-ocid="nav.drawer.dashboard_admin_link"
                 >
                   <LayoutDashboard
@@ -346,7 +346,7 @@ export function Layout({ children }: { children?: ReactNode }) {
               <Link
                 key={link.to}
                 to={link.to}
-                className="rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
+                className="focus-ring rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
                 data-ocid={`nav.${link.label.toLowerCase()}_link`}
               >
                 {link.label}

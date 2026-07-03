@@ -1,15 +1,28 @@
 import {
+  type AdminDashboard,
   type ContentType,
   type ModerationStatus,
   type ModerationTarget,
+  type UserManagementItem,
   type UserRole__1 as UserRoleType,
   UserRole__1,
   UserStatus,
 } from "@/backend";
 import { ChartContainer } from "@/components/shared/ChartContainer";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorState } from "@/components/shared/ErrorState";
 import { LoadingState } from "@/components/shared/LoadingState";
 import { StatCard } from "@/components/shared/StatCard";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -38,6 +51,8 @@ import {
   useHideContent,
   useSuspendUser,
 } from "@/hooks/useQueries";
+import type { Principal } from "@icp-sdk/core/principal";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import {
   Ban,
@@ -119,9 +134,23 @@ function formatDateTime(value: unknown): string {
   });
 }
 
+type ConfirmAction =
+  | {
+      kind: "suspend";
+      userId: Principal;
+      userName: string;
+    }
+  | {
+      kind: "activate";
+      userId: Principal;
+      userName: string;
+    };
+
 export default function AdminDashboardPage() {
   const { isAdmin, isSignedIn } = useAuth();
-  const { data, isLoading, isError, error } = useAdminDashboard();
+  const { data, isLoading, isError, error, refetch, isFetching } =
+    useAdminDashboard();
+  const qc = useQueryClient();
   const suspendUser = useSuspendUser();
   const activateUser = useActivateUser();
   const assignRole = useAssignRole();
@@ -131,6 +160,7 @@ export default function AdminDashboardPage() {
   const [roleDrafts, setRoleDrafts] = useState<Record<string, UserRoleType>>(
     {},
   );
+  const [confirm, setConfirm] = useState<ConfirmAction | null>(null);
 
   if (!isSignedIn) {
     return (
@@ -177,14 +207,17 @@ export default function AdminDashboardPage() {
   if (isError || !data) {
     return (
       <section className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6">
-        <EmptyState
-          icon={ShieldAlert}
+        <ErrorState
           title="Couldn't load the admin dashboard"
-          description={
+          message={
             error instanceof Error
               ? error.message
               : "Please try again in a moment."
           }
+          retryLabel="Retry"
+          onRetry={() => {
+            void refetch();
+          }}
           ocid="admin.error_state"
         />
       </section>
@@ -217,6 +250,29 @@ export default function AdminDashboardPage() {
     (d) => Number(d.value) === 0,
   );
 
+  const handleConfirm = () => {
+    if (!confirm) return;
+    const { userId, userName } = confirm;
+    if (confirm.kind === "suspend") {
+      suspendUser.mutate(userId, {
+        onSuccess: () => toast.success(`${userName} suspended`),
+        onError: (e) =>
+          toast.error(
+            e instanceof Error ? e.message : "Failed to suspend user",
+          ),
+      });
+    } else {
+      activateUser.mutate(userId, {
+        onSuccess: () => toast.success(`${userName} activated`),
+        onError: (e) =>
+          toast.error(
+            e instanceof Error ? e.message : "Failed to activate user",
+          ),
+      });
+    }
+    setConfirm(null);
+  };
+
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6">
       <header className="mb-8">
@@ -231,6 +287,7 @@ export default function AdminDashboardPage() {
       {/* Overview stat cards */}
       <section
         data-ocid="admin.overview.section"
+        aria-label="Platform overview"
         className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
       >
         <StatCard
@@ -266,8 +323,17 @@ export default function AdminDashboardPage() {
       </section>
 
       {/* Charts row */}
-      <section className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {growthData.length === 0 ? (
+      <section
+        className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-2"
+        aria-label="Platform analytics charts"
+      >
+        {isFetching && growthData.length === 0 ? (
+          <LoadingState
+            variant="card"
+            count={1}
+            ocid="admin.growth.loading_state"
+          />
+        ) : growthData.length === 0 ? (
           <EmptyState
             icon={Users}
             title="No growth data yet"
@@ -277,6 +343,7 @@ export default function AdminDashboardPage() {
         ) : (
           <ChartContainer
             title="Platform growth"
+            description="New users and content over time"
             type="line"
             data={growthData}
             xKey="date"
@@ -289,7 +356,13 @@ export default function AdminDashboardPage() {
           />
         )}
 
-        {distributionEmpty ? (
+        {isFetching && distributionEmpty ? (
+          <LoadingState
+            variant="card"
+            count={1}
+            ocid="admin.distribution.loading_state"
+          />
+        ) : distributionEmpty ? (
           <EmptyState
             icon={FileText}
             title="No content yet"
@@ -299,6 +372,7 @@ export default function AdminDashboardPage() {
         ) : (
           <ChartContainer
             title="Content distribution"
+            description="Breakdown by content type"
             type="pie"
             data={distributionData}
             xKey="name"
@@ -312,217 +386,354 @@ export default function AdminDashboardPage() {
       </section>
 
       {/* User management table */}
-      <section data-ocid="admin.users.section" className="mt-10">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-display text-xl font-semibold tracking-tight">
-            User management
-          </h2>
-          <Badge variant="secondary">{users.length} users</Badge>
-        </div>
-        {users.length === 0 ? (
-          <EmptyState
-            icon={Users}
-            title="No users yet"
-            description="Registered users will appear here for management."
-            ocid="admin.users.empty_state"
-          />
-        ) : (
-          <Card>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Joined</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {users.map((user, index) => {
-                      const userIdKey = user.id.toString();
-                      const isActive = user.status === UserStatus.active;
-                      const draftRole = roleDrafts[userIdKey] ?? user.role;
-                      return (
-                        <TableRow
-                          key={userIdKey}
-                          data-ocid={`admin.users.row.${index + 1}`}
-                        >
-                          <TableCell className="font-medium">
-                            {user.name}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">
-                              {roleLabel[user.role] ?? user.role}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={
-                                statusVariant[user.status] ?? "secondary"
-                              }
-                            >
-                              {user.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {formatDate(user.createdAt)}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex flex-wrap items-center justify-end gap-2">
-                              {isActive ? (
-                                <Button
-                                  data-ocid={`admin.users.suspend_button.${index + 1}`}
-                                  variant="outline"
-                                  size="sm"
-                                  disabled={suspendUser.isPending}
-                                  onClick={() =>
-                                    suspendUser.mutate(user.id, {
-                                      onSuccess: () =>
-                                        toast.success("User suspended"),
-                                      onError: (e) =>
-                                        toast.error(
-                                          e instanceof Error
-                                            ? e.message
-                                            : "Failed to suspend user",
-                                        ),
-                                    })
-                                  }
-                                >
-                                  <Ban className="mr-1 h-3.5 w-3.5" />
-                                  Suspend
-                                </Button>
-                              ) : (
-                                <Button
-                                  data-ocid={`admin.users.activate_button.${index + 1}`}
-                                  variant="outline"
-                                  size="sm"
-                                  disabled={activateUser.isPending}
-                                  onClick={() =>
-                                    activateUser.mutate(user.id, {
-                                      onSuccess: () =>
-                                        toast.success("User activated"),
-                                      onError: (e) =>
-                                        toast.error(
-                                          e instanceof Error
-                                            ? e.message
-                                            : "Failed to activate user",
-                                        ),
-                                    })
-                                  }
-                                >
-                                  <Power className="mr-1 h-3.5 w-3.5" />
-                                  Activate
-                                </Button>
-                              )}
-                              <Select
-                                value={draftRole}
-                                onValueChange={(v) =>
-                                  setRoleDrafts((prev) => ({
-                                    ...prev,
-                                    [userIdKey]: v as UserRoleType,
-                                  }))
-                                }
-                              >
-                                <SelectTrigger
-                                  data-ocid={`admin.users.role_select.${index + 1}`}
-                                  className="h-8 w-[110px]"
-                                  size="sm"
-                                >
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {ROLE_OPTIONS.map((opt) => (
-                                    <SelectItem
-                                      key={opt.value}
-                                      value={opt.value}
-                                    >
-                                      {opt.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <Button
-                                data-ocid={`admin.users.assign_role_button.${index + 1}`}
-                                variant="secondary"
-                                size="sm"
-                                disabled={
-                                  assignRole.isPending ||
-                                  draftRole === user.role
-                                }
-                                onClick={() =>
-                                  assignRole.mutate(
-                                    { user: user.id, role: draftRole },
-                                    {
-                                      onSuccess: () => {
-                                        toast.success("Role updated");
-                                        setRoleDrafts((prev) => {
-                                          const next = { ...prev };
-                                          delete next[userIdKey];
-                                          return next;
-                                        });
-                                      },
-                                      onError: (e) =>
-                                        toast.error(
-                                          e instanceof Error
-                                            ? e.message
-                                            : "Failed to update role",
-                                        ),
-                                    },
-                                  )
-                                }
-                              >
-                                <ShieldCheck className="mr-1 h-3.5 w-3.5" />
-                                Set
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </section>
+      <UserManagementSection
+        users={users}
+        roleDrafts={roleDrafts}
+        setRoleDrafts={setRoleDrafts}
+        onSuspend={(userId, userName) =>
+          setConfirm({ kind: "suspend", userId, userName })
+        }
+        onActivate={(userId, userName) =>
+          setConfirm({ kind: "activate", userId, userName })
+        }
+        onAssignRole={(userId, role, userName) => {
+          // Optimistic update: immediately reflect the new role in the cache.
+          qc.setQueryData<AdminDashboard>(["admin-dashboard"], (prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              users: prev.users.map((u) =>
+                u.id.toString() === userId.toString() ? { ...u, role } : u,
+              ),
+            };
+          });
+          assignRole.mutate(
+            { user: userId, role },
+            {
+              onSuccess: () => {
+                toast.success(`${userName} is now ${roleLabel[role]}`);
+                setRoleDrafts((prev) => {
+                  const next = { ...prev };
+                  delete next[userId.toString()];
+                  return next;
+                });
+              },
+              onError: (e) => {
+                // Roll back by invalidating to refetch the true state.
+                qc.invalidateQueries({ queryKey: ["admin-dashboard"] });
+                toast.error(
+                  e instanceof Error ? e.message : "Failed to update role",
+                );
+              },
+            },
+          );
+        }}
+        suspendPending={suspendUser.isPending}
+        activatePending={activateUser.isPending}
+        assignPending={assignRole.isPending}
+      />
 
       {/* Moderation queue */}
-      <section data-ocid="admin.moderation.section" className="mt-10">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-display text-xl font-semibold tracking-tight">
-            Content moderation queue
-          </h2>
-          <Badge variant="secondary">{moderationQueue.length} items</Badge>
-        </div>
-        {moderationQueue.length === 0 ? (
-          <EmptyState
-            icon={Check}
-            title="Queue is clear"
-            description="No flagged content awaiting review. Nice work."
-            ocid="admin.moderation.empty_state"
-          />
-        ) : (
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            {moderationQueue.map((item, index) => {
-              const base =
-                contentTypeRoute[item.content.contentType] ?? "/blogs";
-              const detailPath = `${base}/${item.content.id.toString()}`;
-              const target: ModerationTarget = {
-                id: item.content.id,
-                contentType: item.content.contentType,
-              };
-              return (
-                <Card
-                  key={`${item.content.id.toString()}-${index}`}
-                  data-ocid={`admin.moderation.item.${index + 1}`}
-                  className="flex flex-col gap-3"
-                >
-                  <CardContent className="flex flex-col gap-3 p-5">
-                    <div className="flex items-center justify-between">
+      <ModerationSection
+        items={moderationQueue}
+        onApprove={(target) =>
+          approveContent.mutate(target, {
+            onSuccess: () => toast.success("Content approved"),
+            onError: (e) =>
+              toast.error(e instanceof Error ? e.message : "Failed to approve"),
+          })
+        }
+        onHide={(target) =>
+          hideContent.mutate(target, {
+            onSuccess: () => toast.success("Content hidden"),
+            onError: (e) =>
+              toast.error(e instanceof Error ? e.message : "Failed to hide"),
+          })
+        }
+        onDelete={(target) =>
+          deleteContent.mutate(target, {
+            onSuccess: () => toast.success("Content deleted"),
+            onError: (e) =>
+              toast.error(e instanceof Error ? e.message : "Failed to delete"),
+          })
+        }
+        approvePending={approveContent.isPending}
+        hidePending={hideContent.isPending}
+        deletePending={deleteContent.isPending}
+      />
+
+      {/* Confirmation dialog for suspend / activate */}
+      <AlertDialog
+        open={confirm !== null}
+        onOpenChange={(open) => {
+          if (!open) setConfirm(null);
+        }}
+      >
+        <AlertDialogContent data-ocid="admin.confirm.dialog">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirm?.kind === "suspend" ? "Suspend user?" : "Activate user?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirm?.kind === "suspend"
+                ? `${confirm.userName} will lose access to their account until reactivated. This action can be reversed.`
+                : `${confirm?.userName ?? ""} will regain full access to their account.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-ocid="admin.confirm.cancel_button">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              data-ocid="admin.confirm.confirm_button"
+              onClick={handleConfirm}
+            >
+              {confirm?.kind === "suspend" ? "Suspend" : "Activate"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* User management section                                             */
+/* ------------------------------------------------------------------ */
+
+interface UserManagementSectionProps {
+  users: UserManagementItem[];
+  roleDrafts: Record<string, UserRoleType>;
+  setRoleDrafts: React.Dispatch<
+    React.SetStateAction<Record<string, UserRoleType>>
+  >;
+  onSuspend: (userId: Principal, userName: string) => void;
+  onActivate: (userId: Principal, userName: string) => void;
+  onAssignRole: (
+    userId: Principal,
+    role: UserRoleType,
+    userName: string,
+  ) => void;
+  suspendPending: boolean;
+  activatePending: boolean;
+  assignPending: boolean;
+}
+
+function UserManagementSection({
+  users,
+  roleDrafts,
+  setRoleDrafts,
+  onSuspend,
+  onActivate,
+  onAssignRole,
+  suspendPending,
+  activatePending,
+  assignPending,
+}: UserManagementSectionProps) {
+  return (
+    <section data-ocid="admin.users.section" className="mt-10">
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="font-display text-xl font-semibold tracking-tight">
+          User management
+        </h2>
+        <Badge variant="secondary">{users.length} users</Badge>
+      </div>
+      {users.length === 0 ? (
+        <EmptyState
+          icon={Users}
+          title="No users yet"
+          description="Registered users will appear here for management."
+          ocid="admin.users.empty_state"
+        />
+      ) : (
+        <Card>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <Table aria-label="User management">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Content</TableHead>
+                    <TableHead>Joined</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {users.map((user, index) => {
+                    const userIdKey = user.id.toString();
+                    const isActive = user.status === UserStatus.active;
+                    const draftRole = roleDrafts[userIdKey] ?? user.role;
+                    return (
+                      <TableRow
+                        key={userIdKey}
+                        data-ocid={`admin.users.row.${index + 1}`}
+                      >
+                        <TableCell className="font-medium">
+                          {user.name}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {roleLabel[user.role] ?? user.role}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={statusVariant[user.status] ?? "secondary"}
+                          >
+                            {user.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums text-muted-foreground">
+                          {Number(user.contentCount)}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {formatDate(user.createdAt)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap items-center justify-end gap-2">
+                            {isActive ? (
+                              <Button
+                                data-ocid={`admin.users.suspend_button.${index + 1}`}
+                                variant="outline"
+                                size="sm"
+                                disabled={suspendPending}
+                                aria-label={`Suspend ${user.name}`}
+                                onClick={() => onSuspend(user.id, user.name)}
+                              >
+                                <Ban className="mr-1 h-3.5 w-3.5" />
+                                Suspend
+                              </Button>
+                            ) : (
+                              <Button
+                                data-ocid={`admin.users.activate_button.${index + 1}`}
+                                variant="outline"
+                                size="sm"
+                                disabled={activatePending}
+                                aria-label={`Activate ${user.name}`}
+                                onClick={() => onActivate(user.id, user.name)}
+                              >
+                                <Power className="mr-1 h-3.5 w-3.5" />
+                                Activate
+                              </Button>
+                            )}
+                            <Select
+                              value={draftRole}
+                              onValueChange={(v) =>
+                                setRoleDrafts((prev) => ({
+                                  ...prev,
+                                  [userIdKey]: v as UserRoleType,
+                                }))
+                              }
+                            >
+                              <SelectTrigger
+                                data-ocid={`admin.users.role_select.${index + 1}`}
+                                className="h-8 w-[110px]"
+                                aria-label={`Change role for ${user.name}`}
+                              >
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {ROLE_OPTIONS.map((opt) => (
+                                  <SelectItem key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Button
+                              data-ocid={`admin.users.assign_role_button.${index + 1}`}
+                              variant="secondary"
+                              size="sm"
+                              disabled={
+                                assignPending || draftRole === user.role
+                              }
+                              aria-label={`Assign ${roleLabel[draftRole]} role to ${user.name}`}
+                              onClick={() =>
+                                onAssignRole(user.id, draftRole, user.name)
+                              }
+                            >
+                              <ShieldCheck className="mr-1 h-3.5 w-3.5" />
+                              Set
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Moderation queue section                                            */
+/* ------------------------------------------------------------------ */
+
+interface ModerationSectionProps {
+  items: AdminDashboard["moderationQueue"];
+  onApprove: (target: ModerationTarget) => void;
+  onHide: (target: ModerationTarget) => void;
+  onDelete: (target: ModerationTarget) => void;
+  approvePending: boolean;
+  hidePending: boolean;
+  deletePending: boolean;
+}
+
+function ModerationSection({
+  items,
+  onApprove,
+  onHide,
+  onDelete,
+  approvePending,
+  hidePending,
+  deletePending,
+}: ModerationSectionProps) {
+  return (
+    <section data-ocid="admin.moderation.section" className="mt-10">
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="font-display text-xl font-semibold tracking-tight">
+          Content moderation queue
+        </h2>
+        <Badge variant="secondary">{items.length} items</Badge>
+      </div>
+      {items.length === 0 ? (
+        <EmptyState
+          icon={Check}
+          title="Queue is clear"
+          description="No flagged content awaiting review. Nice work."
+          ocid="admin.moderation.empty_state"
+        />
+      ) : (
+        <ol
+          className="grid grid-cols-1 gap-4 lg:grid-cols-2"
+          aria-label="Moderation queue"
+        >
+          {items.map((item, index) => {
+            const base = contentTypeRoute[item.content.contentType] ?? "/blogs";
+            const detailPath = `${base}/${item.content.id.toString()}`;
+            const target: ModerationTarget = {
+              id: item.content.id,
+              contentType: item.content.contentType,
+            };
+            const typeLabel =
+              contentTypeLabel[item.content.contentType] ??
+              item.content.contentType;
+            return (
+              <Card
+                key={`${item.content.id.toString()}-${index}`}
+                data-ocid={`admin.moderation.item.${index + 1}`}
+                className="flex flex-col gap-3"
+              >
+                <CardContent className="flex flex-col gap-3 p-5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
                       <Badge
                         variant={
                           moderationStatusVariant[item.status] ?? "secondary"
@@ -530,100 +741,72 @@ export default function AdminDashboardPage() {
                       >
                         {item.status}
                       </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {formatDateTime(item.flaggedAt)}
+                      <Badge variant="outline">{typeLabel}</Badge>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {formatDateTime(item.flaggedAt)}
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <Link
+                      to={detailPath}
+                      className="line-clamp-1 font-medium hover:underline"
+                    >
+                      {item.content.title}
+                    </Link>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      by {item.content.author.toText()}
+                    </p>
+                  </div>
+                  {item.reason && (
+                    <p className="rounded-md bg-muted/60 p-3 text-sm text-muted-foreground">
+                      <span className="font-medium text-foreground">
+                        Reason:{" "}
                       </span>
-                    </div>
-                    <div className="min-w-0">
-                      <Link
-                        to={detailPath}
-                        className="line-clamp-1 font-medium hover:underline"
-                      >
-                        {item.content.title}
-                      </Link>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        by {item.content.author.toText()} ·{" "}
-                        {contentTypeLabel[item.content.contentType] ??
-                          item.content.contentType}
-                      </p>
-                    </div>
-                    {item.reason && (
-                      <p className="rounded-md bg-muted/60 p-3 text-sm text-muted-foreground">
-                        <span className="font-medium text-foreground">
-                          Reason:{" "}
-                        </span>
-                        {item.reason}
-                      </p>
-                    )}
-                    <div className="mt-auto flex flex-wrap gap-2">
-                      <Button
-                        data-ocid={`admin.moderation.approve_button.${index + 1}`}
-                        variant="default"
-                        size="sm"
-                        disabled={approveContent.isPending}
-                        onClick={() =>
-                          approveContent.mutate(target, {
-                            onSuccess: () => toast.success("Content approved"),
-                            onError: (e) =>
-                              toast.error(
-                                e instanceof Error
-                                  ? e.message
-                                  : "Failed to approve",
-                              ),
-                          })
-                        }
-                      >
-                        <Check className="mr-1 h-3.5 w-3.5" />
-                        Approve
-                      </Button>
-                      <Button
-                        data-ocid={`admin.moderation.hide_button.${index + 1}`}
-                        variant="secondary"
-                        size="sm"
-                        disabled={hideContent.isPending}
-                        onClick={() =>
-                          hideContent.mutate(target, {
-                            onSuccess: () => toast.success("Content hidden"),
-                            onError: (e) =>
-                              toast.error(
-                                e instanceof Error
-                                  ? e.message
-                                  : "Failed to hide",
-                              ),
-                          })
-                        }
-                      >
-                        <EyeOff className="mr-1 h-3.5 w-3.5" />
-                        Hide
-                      </Button>
-                      <Button
-                        data-ocid={`admin.moderation.delete_button.${index + 1}`}
-                        variant="destructive"
-                        size="sm"
-                        disabled={deleteContent.isPending}
-                        onClick={() =>
-                          deleteContent.mutate(target, {
-                            onSuccess: () => toast.success("Content deleted"),
-                            onError: (e) =>
-                              toast.error(
-                                e instanceof Error
-                                  ? e.message
-                                  : "Failed to delete",
-                              ),
-                          })
-                        }
-                      >
-                        <Trash2 className="mr-1 h-3.5 w-3.5" />
-                        Delete
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        )}
-      </section>
-    </div>
+                      {item.reason}
+                    </p>
+                  )}
+                  <div className="mt-auto flex flex-wrap gap-2">
+                    <Button
+                      data-ocid={`admin.moderation.approve_button.${index + 1}`}
+                      variant="default"
+                      size="sm"
+                      disabled={approvePending}
+                      aria-label={`Approve ${item.content.title}`}
+                      onClick={() => onApprove(target)}
+                    >
+                      <Check className="mr-1 h-3.5 w-3.5" />
+                      Approve
+                    </Button>
+                    <Button
+                      data-ocid={`admin.moderation.hide_button.${index + 1}`}
+                      variant="secondary"
+                      size="sm"
+                      disabled={hidePending}
+                      aria-label={`Hide ${item.content.title}`}
+                      onClick={() => onHide(target)}
+                    >
+                      <EyeOff className="mr-1 h-3.5 w-3.5" />
+                      Hide
+                    </Button>
+                    <Button
+                      data-ocid={`admin.moderation.delete_button.${index + 1}`}
+                      variant="destructive"
+                      size="sm"
+                      disabled={deletePending}
+                      aria-label={`Delete ${item.content.title}`}
+                      onClick={() => onDelete(target)}
+                    >
+                      <Trash2 className="mr-1 h-3.5 w-3.5" />
+                      Delete
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </ol>
+      )}
+    </section>
   );
 }

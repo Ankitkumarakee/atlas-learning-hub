@@ -100,7 +100,7 @@ export default function StudentDashboardPage() {
   const activityData: Array<Record<string, unknown>> =
     learningActivityOverTime.map((p) => ({
       date: p.date,
-      count: Number(p.count),
+      count: Number(p.bookmarks + p.likes + p.aiSessions),
     }));
 
   return (
