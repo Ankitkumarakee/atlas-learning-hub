@@ -75,12 +75,6 @@ export interface ListBlogsQuery {
     pageSize: bigint;
     search?: string;
 }
-export interface AdminTotals {
-    totalCreators: bigint;
-    totalUsers: bigint;
-    totalContentItems: bigint;
-    flaggedItemsCount: bigint;
-}
 export interface NotificationView {
     id: NotificationId;
     content: string;
@@ -112,16 +106,6 @@ export type CommentId = bigint;
 export interface SourceContent {
     id: bigint;
     contentType: string;
-}
-export interface PlatformGrowthPoint {
-    date: string;
-    newContent: bigint;
-    newUsers: bigint;
-}
-export interface ContentDistribution {
-    notes: bigint;
-    blogs: bigint;
-    videos: bigint;
 }
 export interface EngagementByType {
     contentType: ContentType;
@@ -235,13 +219,6 @@ export interface VideoFilter {
     search?: string;
     category?: Category;
 }
-export interface AdminDashboard {
-    contentDistribution: ContentDistribution;
-    moderationQueue: Array<ModerationQueueItem>;
-    platformGrowthOverTime: Array<PlatformGrowthPoint>;
-    totals: AdminTotals;
-    users: Array<UserManagementItem>;
-}
 export interface VideoPage {
     total: bigint;
     page: bigint;
@@ -269,10 +246,6 @@ export interface SourceReference {
     title: string;
     contentId: bigint;
     sourceType: SourceType;
-}
-export interface ModerationTarget {
-    id: bigint;
-    contentType: ContentType;
 }
 export interface TransformationInput {
     context: Uint8Array;
@@ -350,14 +323,6 @@ export interface NoteUpdate {
     fileType?: NoteFileType;
     blobId?: string;
 }
-export interface UserManagementItem {
-    id: Principal;
-    status: UserStatus;
-    contentCount: bigint;
-    name: string;
-    createdAt: Timestamp;
-    role: UserRole__1;
-}
 export interface NoteInput {
     title: string;
     subject: string;
@@ -381,12 +346,6 @@ export interface Message {
     conversationId: bigint;
     sources: Array<SourceReference>;
 }
-export interface ModerationQueueItem {
-    status: ModerationStatus;
-    content: ContentRef;
-    flaggedAt: Timestamp;
-    reason: string;
-}
 export interface ContentRef {
     id: bigint;
     title: string;
@@ -407,11 +366,6 @@ export enum ContentType {
 export enum MessageRole {
     user = "user",
     assistant = "assistant"
-}
-export enum ModerationStatus {
-    hidden = "hidden",
-    approved = "approved",
-    flagged = "flagged"
 }
 export enum NoteFileType {
     pdf = "pdf",
@@ -437,21 +391,9 @@ export enum UserRole {
     user = "user",
     guest = "guest"
 }
-export enum UserRole__1 {
-    creator = "creator",
-    admin = "admin",
-    user = "user"
-}
-export enum UserStatus {
-    active = "active",
-    suspended = "suspended"
-}
 export interface backendInterface {
-    activateUser(user: Principal): Promise<void>;
     addComment(blogId: BlogId, parentCommentId: CommentId | null, content: string): Promise<CommentView>;
-    approveContent(target: ModerationTarget): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
-    assignRole(user: Principal, role: UserRole__1): Promise<void>;
     bookmarkBlog(id: BlogId): Promise<void>;
     bookmarkNote(id: bigint): Promise<void>;
     bookmarkVideo(id: VideoId): Promise<boolean>;
@@ -462,11 +404,9 @@ export interface backendInterface {
     createVideo(input: VideoInput): Promise<Video>;
     deleteBlog(id: BlogId): Promise<void>;
     deleteComment(id: CommentId): Promise<void>;
-    deleteContent(target: ModerationTarget): Promise<void>;
     deleteConversation(conversationId: bigint): Promise<boolean>;
     deleteNote(id: bigint): Promise<void>;
     deleteVideo(id: VideoId): Promise<boolean>;
-    getAdminDashboard(): Promise<AdminDashboard>;
     getBlog(id: BlogId): Promise<BlogView | null>;
     getCallerUserRole(): Promise<UserRole>;
     getComments(blogId: BlogId): Promise<Array<CommentView>>;
@@ -477,7 +417,6 @@ export interface backendInterface {
     getStudentDashboard(): Promise<StudentDashboard>;
     getTrending(limit: bigint): Promise<Array<TrendingItem>>;
     getVideo(id: VideoId): Promise<Video | null>;
-    hideContent(target: ModerationTarget): Promise<void>;
     incrementDownload(id: bigint): Promise<void>;
     incrementView(id: VideoId, sessionKey: string): Promise<boolean>;
     isCallerAdmin(): Promise<boolean>;
@@ -495,7 +434,6 @@ export interface backendInterface {
     markAllNotificationsRead(): Promise<void>;
     markNotificationRead(notificationId: NotificationId): Promise<void>;
     sendMessage(conversationId: bigint, userMessage: string): Promise<SendMessageResult>;
-    suspendUser(user: Principal): Promise<void>;
     transform(input: TransformationInput): Promise<TransformationOutput>;
     unbookmarkBlog(id: BlogId): Promise<void>;
     unbookmarkNote(id: bigint): Promise<void>;

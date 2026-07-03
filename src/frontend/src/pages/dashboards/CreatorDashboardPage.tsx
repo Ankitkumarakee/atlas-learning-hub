@@ -15,7 +15,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useAuth } from "@/hooks/useAuth";
 import { useCreatorDashboard } from "@/hooks/useQueries";
 import type {
   ContentPerformanceItem,
@@ -26,41 +25,18 @@ import { Link } from "@tanstack/react-router";
 import {
   ArrowDownRight,
   ArrowUpRight,
-  BarChart3,
   Bookmark,
   Eye,
   FileText,
   Heart,
   LineChart as LineChartIcon,
-  Lock,
   MessageSquare,
   Minus,
   PenLine,
-  TrendingUp,
   Upload,
   Video,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-
-/* ------------------------------------------------------------------ */
-/* Access gate                                                         */
-/* ------------------------------------------------------------------ */
-
-function AccessDenied() {
-  const { signIn } = useAuth();
-  return (
-    <section className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6">
-      <EmptyState
-        icon={Lock}
-        title="Creator access required"
-        description="Sign in with an Internet Identity to view your creator analytics, engagement, and content performance."
-        actionLabel="Sign in"
-        onAction={signIn}
-        ocid="creator_dashboard.access_denied"
-      />
-    </section>
-  );
-}
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
@@ -509,22 +485,7 @@ function RecentCommentsFeed({ items }: { items: RecentCommentItem[] }) {
 /* ------------------------------------------------------------------ */
 
 export function CreatorDashboardPage() {
-  const { isCreator, isLoadingRole } = useAuth();
   const { data, isLoading, isError, error, refetch } = useCreatorDashboard();
-
-  if (isLoadingRole) {
-    return (
-      <section className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6">
-        <LoadingState
-          variant="card"
-          count={4}
-          ocid="creator_dashboard.loading_state"
-        />
-      </section>
-    );
-  }
-
-  if (!isCreator) return <AccessDenied />;
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6">

@@ -10,14 +10,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useAuth } from "@/hooks/useAuth";
 import {
   useMarkAllNotificationsRead,
   useMarkNotificationRead,
   useNotifications,
 } from "@/hooks/useQueries";
 import { cn } from "@/lib/utils";
-import type { NotificationType as NT, NotificationView } from "@/types";
+import type { NotificationView } from "@/types";
 import {
   Bell,
   CheckCheck,
@@ -28,6 +27,8 @@ import {
   Trash2,
 } from "lucide-react";
 import { useState } from "react";
+
+type NT = NotificationType;
 
 const typeMeta: Record<
   NT,
@@ -75,13 +76,10 @@ function formatRelative(createdAt: bigint): string {
 }
 
 export function NotificationBell() {
-  const { isSignedIn } = useAuth();
   const { data, isLoading } = useNotifications();
   const markAll = useMarkAllNotificationsRead();
   const markOne = useMarkNotificationRead();
   const [open, setOpen] = useState(false);
-
-  if (!isSignedIn) return null;
 
   const unread = Number(data?.unreadCount ?? 0n);
   const items = data?.items ?? [];

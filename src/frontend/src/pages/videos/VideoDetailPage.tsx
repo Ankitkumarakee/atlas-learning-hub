@@ -9,7 +9,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { useAuth } from "@/hooks/useAuth";
 import { useBackend } from "@/hooks/useBackend";
 import {
   useIncrementView,
@@ -24,7 +23,6 @@ import {
   Calendar,
   Eye,
   Heart,
-  Lock,
   PlayCircle,
   User,
 } from "lucide-react";
@@ -76,7 +74,6 @@ export default function VideoDetailPage() {
   const { id } = useParams({ strict: false }) as { id?: string };
   const videoId = id ? BigInt(id) : undefined;
   const navigate = useNavigate();
-  const auth = useAuth();
   const { actor } = useBackend();
   const incrementView = useIncrementView();
 
@@ -101,9 +98,9 @@ export default function VideoDetailPage() {
     setViewCount(video.viewCount);
   }, [video]);
 
-  // Fetch like/bookmark status for signed-in users.
+  // Fetch like/bookmark status.
   useEffect(() => {
-    if (!actor || !auth.isSignedIn || videoId === undefined) return;
+    if (!actor || videoId === undefined) return;
     let cancelled = false;
     void (async () => {
       try {
@@ -122,7 +119,7 @@ export default function VideoDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [actor, auth.isSignedIn, videoId]);
+  }, [actor, videoId]);
 
   if (isLoading) {
     return (
@@ -165,11 +162,6 @@ export default function VideoDetailPage() {
   };
 
   const handleLikeToggle = () => {
-    if (!auth.isSignedIn) {
-      toast.info("Sign in to like videos");
-      auth.signIn();
-      return;
-    }
     if (videoId === undefined || engagementPending) return;
     setEngagementPending(true);
     const nextLiked = !liked;
@@ -192,11 +184,6 @@ export default function VideoDetailPage() {
   };
 
   const handleBookmarkToggle = () => {
-    if (!auth.isSignedIn) {
-      toast.info("Sign in to bookmark videos");
-      auth.signIn();
-      return;
-    }
     if (videoId === undefined || engagementPending) return;
     setEngagementPending(true);
     const nextBookmarked = !bookmarked;
@@ -312,17 +299,6 @@ export default function VideoDetailPage() {
                   />
                 </div>
               </div>
-
-              {/* Sign-in hint for guests */}
-              {!auth.isSignedIn && (
-                <p
-                  className="flex items-center gap-1.5 text-xs text-muted-foreground"
-                  data-ocid="video.signin_hint"
-                >
-                  <Lock className="size-3.5" aria-hidden />
-                  Sign in to like and bookmark this video.
-                </p>
-              )}
 
               <Separator />
 

@@ -1,6 +1,4 @@
 import { NotificationBell } from "@/components/NotificationBell";
-import { RoleBadge } from "@/components/shared/RoleBadge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -19,7 +17,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { Link, Outlet, useNavigate } from "@tanstack/react-router";
 import {
@@ -27,14 +24,12 @@ import {
   ChevronDown,
   FileText,
   LayoutDashboard,
-  LogOut,
   Menu,
   Moon,
   PenSquare,
   Search,
   Sparkles,
   Sun,
-  User as UserIcon,
   Video,
 } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -125,8 +120,6 @@ function SearchBar({ className }: { className?: string }) {
 }
 
 function DashboardsMenu() {
-  const { isCreator, isAdmin } = useAuth();
-  if (!isCreator && !isAdmin) return null;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -146,95 +139,17 @@ function DashboardsMenu() {
       >
         <DropdownMenuLabel>Analytics</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {isCreator && (
-          <DropdownMenuItem asChild>
-            <Link
-              to="/dashboard/creator"
-              data-ocid="nav.dashboard_creator_link"
-            >
-              <PenSquare className="size-4" aria-hidden />
-              Creator
-            </Link>
-          </DropdownMenuItem>
-        )}
+        <DropdownMenuItem asChild>
+          <Link to="/dashboard/creator" data-ocid="nav.dashboard_creator_link">
+            <PenSquare className="size-4" aria-hidden />
+            Creator
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link to="/dashboard/student" data-ocid="nav.dashboard_student_link">
             <BookOpen className="size-4" aria-hidden />
             Student
           </Link>
-        </DropdownMenuItem>
-        {isAdmin && (
-          <DropdownMenuItem asChild>
-            <Link to="/dashboard/admin" data-ocid="nav.dashboard_admin_link">
-              <LayoutDashboard className="size-4" aria-hidden />
-              Admin
-            </Link>
-          </DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-function ProfileMenu() {
-  const { isSignedIn, signIn, signOut, principal, displayRole } = useAuth();
-  if (!isSignedIn) {
-    return (
-      <Button
-        size="sm"
-        className="h-9"
-        onClick={signIn}
-        data-ocid="nav.sign_in_button"
-      >
-        Sign in
-      </Button>
-    );
-  }
-  const initials = principal ? principal.slice(0, 2).toUpperCase() : "AT";
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          className="size-9 rounded-full p-0"
-          aria-label="Account menu"
-          data-ocid="nav.profile.open_dropdown"
-        >
-          <Avatar className="size-9">
-            <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        className="w-56"
-        data-ocid="nav.profile.dropdown_menu"
-      >
-        <DropdownMenuLabel className="flex items-center justify-between gap-2">
-          <span className="truncate text-xs text-muted-foreground">
-            {principal}
-          </span>
-        </DropdownMenuLabel>
-        <div className="px-2 pb-1">
-          <RoleBadge role={displayRole} />
-        </div>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link to="/profile" data-ocid="nav.profile_link">
-            <UserIcon className="size-4" aria-hidden />
-            Profile
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={signOut}
-          className="text-destructive focus:text-destructive"
-          data-ocid="nav.sign_out_button"
-        >
-          <LogOut className="size-4" aria-hidden />
-          Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -243,7 +158,6 @@ function ProfileMenu() {
 
 function MobileNav() {
   const [open, setOpen] = useState(false);
-  const { isCreator, isAdmin } = useAuth();
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
@@ -279,54 +193,28 @@ function MobileNav() {
               </Link>
             );
           })}
-          {(isCreator || isAdmin) && (
-            <>
-              <Separator className="my-2" />
-              <p className="px-3 pb-1 pt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Dashboards
-              </p>
-              {isCreator && (
-                <Link
-                  to="/dashboard/creator"
-                  onClick={() => setOpen(false)}
-                  className="focus-ring flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
-                  data-ocid="nav.drawer.dashboard_creator_link"
-                >
-                  <PenSquare
-                    className="size-4 text-muted-foreground"
-                    aria-hidden
-                  />
-                  Creator
-                </Link>
-              )}
-              <Link
-                to="/dashboard/student"
-                onClick={() => setOpen(false)}
-                className="focus-ring flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
-                data-ocid="nav.drawer.dashboard_student_link"
-              >
-                <BookOpen
-                  className="size-4 text-muted-foreground"
-                  aria-hidden
-                />
-                Student
-              </Link>
-              {isAdmin && (
-                <Link
-                  to="/dashboard/admin"
-                  onClick={() => setOpen(false)}
-                  className="focus-ring flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
-                  data-ocid="nav.drawer.dashboard_admin_link"
-                >
-                  <LayoutDashboard
-                    className="size-4 text-muted-foreground"
-                    aria-hidden
-                  />
-                  Admin
-                </Link>
-              )}
-            </>
-          )}
+          <Separator className="my-2" />
+          <p className="px-3 pb-1 pt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Dashboards
+          </p>
+          <Link
+            to="/dashboard/creator"
+            onClick={() => setOpen(false)}
+            className="focus-ring flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
+            data-ocid="nav.drawer.dashboard_creator_link"
+          >
+            <PenSquare className="size-4 text-muted-foreground" aria-hidden />
+            Creator
+          </Link>
+          <Link
+            to="/dashboard/student"
+            onClick={() => setOpen(false)}
+            className="focus-ring flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
+            data-ocid="nav.drawer.dashboard_student_link"
+          >
+            <BookOpen className="size-4 text-muted-foreground" aria-hidden />
+            Student
+          </Link>
         </nav>
       </SheetContent>
     </Sheet>
@@ -358,7 +246,6 @@ export function Layout({ children }: { children?: ReactNode }) {
             <SearchBar className="hidden w-56 xl:block" />
             <NotificationBell />
             <ThemeToggle />
-            <ProfileMenu />
           </div>
         </div>
       </header>

@@ -72,24 +72,10 @@ export const CommentView = IDL.Record({
   'author' : IDL.Principal,
   'blogId' : BlogId,
 });
-export const ContentType = IDL.Variant({
-  'video' : IDL.Null,
-  'blog' : IDL.Null,
-  'note' : IDL.Null,
-});
-export const ModerationTarget = IDL.Record({
-  'id' : IDL.Nat,
-  'contentType' : ContentType,
-});
 export const UserRole = IDL.Variant({
   'admin' : IDL.Null,
   'user' : IDL.Null,
   'guest' : IDL.Null,
-});
-export const UserRole__1 = IDL.Variant({
-  'creator' : IDL.Null,
-  'admin' : IDL.Null,
-  'user' : IDL.Null,
 });
 export const VideoId = IDL.Nat;
 export const BlogView = IDL.Record({
@@ -174,57 +160,10 @@ export const Video = IDL.Record({
   'durationSeconds' : IDL.Nat,
   'category' : Category,
 });
-export const ContentDistribution = IDL.Record({
-  'notes' : IDL.Nat,
-  'blogs' : IDL.Nat,
-  'videos' : IDL.Nat,
-});
-export const ModerationStatus = IDL.Variant({
-  'hidden' : IDL.Null,
-  'approved' : IDL.Null,
-  'flagged' : IDL.Null,
-});
-export const ContentRef = IDL.Record({
-  'id' : IDL.Nat,
-  'title' : IDL.Text,
-  'contentType' : ContentType,
-  'author' : IDL.Principal,
-});
-export const ModerationQueueItem = IDL.Record({
-  'status' : ModerationStatus,
-  'content' : ContentRef,
-  'flaggedAt' : Timestamp,
-  'reason' : IDL.Text,
-});
-export const PlatformGrowthPoint = IDL.Record({
-  'date' : IDL.Text,
-  'newContent' : IDL.Nat,
-  'newUsers' : IDL.Nat,
-});
-export const AdminTotals = IDL.Record({
-  'totalCreators' : IDL.Nat,
-  'totalUsers' : IDL.Nat,
-  'totalContentItems' : IDL.Nat,
-  'flaggedItemsCount' : IDL.Nat,
-});
-export const UserStatus = IDL.Variant({
-  'active' : IDL.Null,
-  'suspended' : IDL.Null,
-});
-export const UserManagementItem = IDL.Record({
-  'id' : IDL.Principal,
-  'status' : UserStatus,
-  'contentCount' : IDL.Nat,
-  'name' : IDL.Text,
-  'createdAt' : Timestamp,
-  'role' : UserRole__1,
-});
-export const AdminDashboard = IDL.Record({
-  'contentDistribution' : ContentDistribution,
-  'moderationQueue' : IDL.Vec(ModerationQueueItem),
-  'platformGrowthOverTime' : IDL.Vec(PlatformGrowthPoint),
-  'totals' : AdminTotals,
-  'users' : IDL.Vec(UserManagementItem),
+export const ContentType = IDL.Variant({
+  'video' : IDL.Null,
+  'blog' : IDL.Null,
+  'note' : IDL.Null,
 });
 export const ContentPerformanceItem = IDL.Record({
   'id' : IDL.Nat,
@@ -282,6 +221,12 @@ export const Recommendation = IDL.Record({
   }),
   'score' : IDL.Float64,
   'reason' : IDL.Text,
+});
+export const ContentRef = IDL.Record({
+  'id' : IDL.Nat,
+  'title' : IDL.Text,
+  'contentType' : ContentType,
+  'author' : IDL.Principal,
 });
 export const BookmarkItem = IDL.Record({
   'content' : ContentRef,
@@ -466,15 +411,12 @@ export const idlService = IDL.Service({
   '_initialize_access_control' : IDL.Func([], [], []),
   '_internet_identity_sign_in_finish' : IDL.Func([], [Result], []),
   '_internet_identity_sign_in_start' : IDL.Func([], [IDL.Vec(IDL.Nat8)], []),
-  'activateUser' : IDL.Func([IDL.Principal], [], []),
   'addComment' : IDL.Func(
       [BlogId, IDL.Opt(CommentId), IDL.Text],
       [CommentView],
       [],
     ),
-  'approveContent' : IDL.Func([ModerationTarget], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-  'assignRole' : IDL.Func([IDL.Principal, UserRole__1], [], []),
   'bookmarkBlog' : IDL.Func([BlogId], [], []),
   'bookmarkNote' : IDL.Func([IDL.Nat], [], []),
   'bookmarkVideo' : IDL.Func([VideoId], [IDL.Bool], []),
@@ -500,11 +442,9 @@ export const idlService = IDL.Service({
   'createVideo' : IDL.Func([VideoInput], [Video], []),
   'deleteBlog' : IDL.Func([BlogId], [], []),
   'deleteComment' : IDL.Func([CommentId], [], []),
-  'deleteContent' : IDL.Func([ModerationTarget], [], []),
   'deleteConversation' : IDL.Func([IDL.Nat], [IDL.Bool], []),
   'deleteNote' : IDL.Func([IDL.Nat], [], []),
   'deleteVideo' : IDL.Func([VideoId], [IDL.Bool], []),
-  'getAdminDashboard' : IDL.Func([], [AdminDashboard], []),
   'getBlog' : IDL.Func([BlogId], [IDL.Opt(BlogView)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getComments' : IDL.Func([BlogId], [IDL.Vec(CommentView)], ['query']),
@@ -527,7 +467,6 @@ export const idlService = IDL.Service({
   'getStudentDashboard' : IDL.Func([], [StudentDashboard], []),
   'getTrending' : IDL.Func([IDL.Nat], [IDL.Vec(TrendingItem)], ['query']),
   'getVideo' : IDL.Func([VideoId], [IDL.Opt(Video)], ['query']),
-  'hideContent' : IDL.Func([ModerationTarget], [], []),
   'incrementDownload' : IDL.Func([IDL.Nat], [], []),
   'incrementView' : IDL.Func([VideoId, IDL.Text], [IDL.Bool], []),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
@@ -545,7 +484,6 @@ export const idlService = IDL.Service({
   'markAllNotificationsRead' : IDL.Func([], [], []),
   'markNotificationRead' : IDL.Func([NotificationId], [], []),
   'sendMessage' : IDL.Func([IDL.Nat, IDL.Text], [SendMessageResult], []),
-  'suspendUser' : IDL.Func([IDL.Principal], [], []),
   'transform' : IDL.Func(
       [TransformationInput],
       [TransformationOutput],
@@ -641,24 +579,10 @@ export const idlFactory = ({ IDL }) => {
     'author' : IDL.Principal,
     'blogId' : BlogId,
   });
-  const ContentType = IDL.Variant({
-    'video' : IDL.Null,
-    'blog' : IDL.Null,
-    'note' : IDL.Null,
-  });
-  const ModerationTarget = IDL.Record({
-    'id' : IDL.Nat,
-    'contentType' : ContentType,
-  });
   const UserRole = IDL.Variant({
     'admin' : IDL.Null,
     'user' : IDL.Null,
     'guest' : IDL.Null,
-  });
-  const UserRole__1 = IDL.Variant({
-    'creator' : IDL.Null,
-    'admin' : IDL.Null,
-    'user' : IDL.Null,
   });
   const VideoId = IDL.Nat;
   const BlogView = IDL.Record({
@@ -743,57 +667,10 @@ export const idlFactory = ({ IDL }) => {
     'durationSeconds' : IDL.Nat,
     'category' : Category,
   });
-  const ContentDistribution = IDL.Record({
-    'notes' : IDL.Nat,
-    'blogs' : IDL.Nat,
-    'videos' : IDL.Nat,
-  });
-  const ModerationStatus = IDL.Variant({
-    'hidden' : IDL.Null,
-    'approved' : IDL.Null,
-    'flagged' : IDL.Null,
-  });
-  const ContentRef = IDL.Record({
-    'id' : IDL.Nat,
-    'title' : IDL.Text,
-    'contentType' : ContentType,
-    'author' : IDL.Principal,
-  });
-  const ModerationQueueItem = IDL.Record({
-    'status' : ModerationStatus,
-    'content' : ContentRef,
-    'flaggedAt' : Timestamp,
-    'reason' : IDL.Text,
-  });
-  const PlatformGrowthPoint = IDL.Record({
-    'date' : IDL.Text,
-    'newContent' : IDL.Nat,
-    'newUsers' : IDL.Nat,
-  });
-  const AdminTotals = IDL.Record({
-    'totalCreators' : IDL.Nat,
-    'totalUsers' : IDL.Nat,
-    'totalContentItems' : IDL.Nat,
-    'flaggedItemsCount' : IDL.Nat,
-  });
-  const UserStatus = IDL.Variant({
-    'active' : IDL.Null,
-    'suspended' : IDL.Null,
-  });
-  const UserManagementItem = IDL.Record({
-    'id' : IDL.Principal,
-    'status' : UserStatus,
-    'contentCount' : IDL.Nat,
-    'name' : IDL.Text,
-    'createdAt' : Timestamp,
-    'role' : UserRole__1,
-  });
-  const AdminDashboard = IDL.Record({
-    'contentDistribution' : ContentDistribution,
-    'moderationQueue' : IDL.Vec(ModerationQueueItem),
-    'platformGrowthOverTime' : IDL.Vec(PlatformGrowthPoint),
-    'totals' : AdminTotals,
-    'users' : IDL.Vec(UserManagementItem),
+  const ContentType = IDL.Variant({
+    'video' : IDL.Null,
+    'blog' : IDL.Null,
+    'note' : IDL.Null,
   });
   const ContentPerformanceItem = IDL.Record({
     'id' : IDL.Nat,
@@ -851,6 +728,12 @@ export const idlFactory = ({ IDL }) => {
     }),
     'score' : IDL.Float64,
     'reason' : IDL.Text,
+  });
+  const ContentRef = IDL.Record({
+    'id' : IDL.Nat,
+    'title' : IDL.Text,
+    'contentType' : ContentType,
+    'author' : IDL.Principal,
   });
   const BookmarkItem = IDL.Record({
     'content' : ContentRef,
@@ -1035,15 +918,12 @@ export const idlFactory = ({ IDL }) => {
     '_initialize_access_control' : IDL.Func([], [], []),
     '_internet_identity_sign_in_finish' : IDL.Func([], [Result], []),
     '_internet_identity_sign_in_start' : IDL.Func([], [IDL.Vec(IDL.Nat8)], []),
-    'activateUser' : IDL.Func([IDL.Principal], [], []),
     'addComment' : IDL.Func(
         [BlogId, IDL.Opt(CommentId), IDL.Text],
         [CommentView],
         [],
       ),
-    'approveContent' : IDL.Func([ModerationTarget], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-    'assignRole' : IDL.Func([IDL.Principal, UserRole__1], [], []),
     'bookmarkBlog' : IDL.Func([BlogId], [], []),
     'bookmarkNote' : IDL.Func([IDL.Nat], [], []),
     'bookmarkVideo' : IDL.Func([VideoId], [IDL.Bool], []),
@@ -1069,11 +949,9 @@ export const idlFactory = ({ IDL }) => {
     'createVideo' : IDL.Func([VideoInput], [Video], []),
     'deleteBlog' : IDL.Func([BlogId], [], []),
     'deleteComment' : IDL.Func([CommentId], [], []),
-    'deleteContent' : IDL.Func([ModerationTarget], [], []),
     'deleteConversation' : IDL.Func([IDL.Nat], [IDL.Bool], []),
     'deleteNote' : IDL.Func([IDL.Nat], [], []),
     'deleteVideo' : IDL.Func([VideoId], [IDL.Bool], []),
-    'getAdminDashboard' : IDL.Func([], [AdminDashboard], []),
     'getBlog' : IDL.Func([BlogId], [IDL.Opt(BlogView)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getComments' : IDL.Func([BlogId], [IDL.Vec(CommentView)], ['query']),
@@ -1096,7 +974,6 @@ export const idlFactory = ({ IDL }) => {
     'getStudentDashboard' : IDL.Func([], [StudentDashboard], []),
     'getTrending' : IDL.Func([IDL.Nat], [IDL.Vec(TrendingItem)], ['query']),
     'getVideo' : IDL.Func([VideoId], [IDL.Opt(Video)], ['query']),
-    'hideContent' : IDL.Func([ModerationTarget], [], []),
     'incrementDownload' : IDL.Func([IDL.Nat], [], []),
     'incrementView' : IDL.Func([VideoId, IDL.Text], [IDL.Bool], []),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
@@ -1114,7 +991,6 @@ export const idlFactory = ({ IDL }) => {
     'markAllNotificationsRead' : IDL.Func([], [], []),
     'markNotificationRead' : IDL.Func([NotificationId], [], []),
     'sendMessage' : IDL.Func([IDL.Nat, IDL.Text], [SendMessageResult], []),
-    'suspendUser' : IDL.Func([IDL.Principal], [], []),
     'transform' : IDL.Func(
         [TransformationInput],
         [TransformationOutput],

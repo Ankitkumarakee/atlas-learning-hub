@@ -1,5 +1,4 @@
 import { NoteFileType } from "@/backend";
-import { EmptyState } from "@/components/shared/EmptyState";
 import { FileUpload } from "@/components/shared/FileUpload";
 import type { UploadedFile } from "@/components/shared/FileUpload";
 import { Badge } from "@/components/ui/badge";
@@ -15,12 +14,11 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { useAuth } from "@/hooks/useAuth";
 import { useCreateNote } from "@/hooks/useQueries";
 import type { NoteInput } from "@/types";
 import { ExternalBlob } from "@caffeineai/object-storage";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, FileText, Info } from "lucide-react";
+import { ArrowLeft, Info } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -43,7 +41,6 @@ const FILE_TYPE_LABEL: Record<NoteFileType, string> = {
 
 export default function NoteUploadPage() {
   const navigate = useNavigate();
-  const { isCreator, signIn, isSignedIn } = useAuth();
   const createNote = useCreateNote();
 
   const [uploaded, setUploaded] = useState<UploadedFile | null>(null);
@@ -109,37 +106,6 @@ export default function NoteUploadPage() {
       );
     }
   };
-
-  // Gate: requires creator role.
-  if (!isSignedIn) {
-    return (
-      <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
-        <EmptyState
-          icon={FileText}
-          title="Sign in to upload"
-          description="You need an Internet Identity account to publish notes on the platform."
-          actionLabel="Sign in"
-          onAction={signIn}
-          ocid="note.upload.signin"
-        />
-      </div>
-    );
-  }
-
-  if (!isCreator) {
-    return (
-      <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
-        <EmptyState
-          icon={FileText}
-          title="Creator access required"
-          description="Only approved creators can publish notes. Contact an admin if you believe this is an error."
-          actionLabel="Back to notes"
-          onAction={() => navigate({ to: "/notes" })}
-          ocid="note.upload.forbidden"
-        />
-      </div>
-    );
-  }
 
   const submitting = createNote.isPending;
 

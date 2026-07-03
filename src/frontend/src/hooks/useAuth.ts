@@ -1,11 +1,11 @@
 import { UserRole } from "@/backend";
 import type { DisplayRole } from "@/types";
-import { useInternetIdentity } from "@caffeineai/core-infrastructure";
 import { useQuery } from "@tanstack/react-query";
 import { useBackend } from "./useBackend";
+import { getGuestIdentity } from "./useGuestIdentity";
 
 export interface AuthState {
-  /** The Internet Identity principal of the signed-in user, or null. */
+  /** The principal of the stable guest identity used for all callers. */
   principal: string | null;
   /** Backend-resolved role for the caller (admin | user | guest). */
   role: UserRole;
@@ -23,46 +23,47 @@ export interface AuthState {
   isLoadingRole: boolean;
 }
 
+const guestIdentity = getGuestIdentity();
+const guestPrincipal = guestIdentity.getPrincipal().toText();
+
+const noop = () => {};
+
 /**
- * Wraps `useInternetIdentity()` and resolves the caller's backend role via
- * `getCallerUserRole()`. The backend only knows `admin | user | guest`; the
- * "creator" tier is a UI concept layered on top of authenticated users and is
- * surfaced through `displayRole` for navigation gating.
+ * Returns a stable guest identity for every caller. Sign-in has been removed,
+ * so the app always operates as the same persisted Ed25519 principal. The
+ * `AuthState` shape is preserved so existing consumers keep compiling, but
+ * `isSignedIn` is always true and `signIn`/`signOut` are no-ops.
  */
 export function useAuth(): AuthState {
-  const { identity, login, clear, isAuthenticated } = useInternetIdentity();
   const { actor, isFetching } = useBackend();
 
-  const principal = identity?.getPrincipal().toText() ?? null;
-
   const roleQuery = useQuery<UserRole>({
-    queryKey: ["caller-role", principal],
+    queryKey: ["caller-role", guestPrincipal],
     queryFn: async () => {
-      if (!actor) return UserRole.guest;
-      return actor.getCallerUserRole();
+      if (!actor) return UserRole.user;
+      try {
+        return await actor.getCallerUserRole();
+      } catch {
+        return UserRole.user;
+      }
     },
-    enabled: !!actor && !isFetching && isAuthenticated,
+    enabled: !!actor && !isFetching,
     staleTime: 30_000,
   });
 
-  const role = roleQuery.data ?? UserRole.guest;
-  const isSignedIn = isAuthenticated;
-  const isGuest = !isAuthenticated || role === UserRole.guest;
-  const isUser = isSignedIn && role === UserRole.user;
-  const isAdmin = isSignedIn && role === UserRole.admin;
-  // Any authenticated, non-guest caller can publish content on this platform.
-  const isCreator = isSignedIn && role !== UserRole.guest;
+  // The backend role is best-effort; the UI treats the guest as a creator
+  // (can publish content) regardless of the backend's view.
+  const role = roleQuery.data ?? UserRole.user;
+  const isSignedIn = true;
+  const isGuest = false;
+  const isUser = true;
+  const isAdmin = false;
+  const isCreator = true;
 
-  const displayRole: DisplayRole = isAdmin
-    ? "admin"
-    : isCreator
-      ? "creator"
-      : isSignedIn
-        ? "user"
-        : "guest";
+  const displayRole: DisplayRole = "creator";
 
   return {
-    principal,
+    principal: guestPrincipal,
     role,
     displayRole,
     isSignedIn,
@@ -70,8 +71,8 @@ export function useAuth(): AuthState {
     isUser,
     isCreator,
     isAdmin,
-    signIn: login,
-    signOut: clear,
+    signIn: noop,
+    signOut: noop,
     isLoadingRole: roleQuery.isLoading,
   };
 }

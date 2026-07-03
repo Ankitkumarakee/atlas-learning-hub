@@ -1695,9 +1695,6 @@ body {
 .h-3 {
   height: 0.75rem;
 }
-.h-3\.5 {
-  height: 0.875rem;
-}
 .h-4 {
   height: 1rem;
 }
@@ -1791,9 +1788,6 @@ body {
 .w-3 {
   width: 0.75rem;
 }
-.w-3\.5 {
-  width: 0.875rem;
-}
 .w-3\/4 {
   width: 75%;
 }
@@ -1826,9 +1820,6 @@ body {
 }
 .w-\[100px\] {
   width: 100px;
-}
-.w-\[110px\] {
-  width: 110px;
 }
 .w-\[180px\] {
   width: 180px;
@@ -2429,9 +2420,6 @@ body {
 }
 .bg-muted\/50 {
   background-color: oklch(var(--muted) / 0.5);
-}
-.bg-muted\/60 {
-  background-color: oklch(var(--muted) / 0.6);
 }
 .bg-popover {
   background-color: oklch(var(--popover));
@@ -3659,11 +3647,6 @@ body {
 
 .focus\:text-accent-foreground:focus {
   color: oklch(var(--accent-foreground));
-}
-
-.focus\:text-destructive:focus {
-  --tw-text-opacity: 1;
-  color: oklch(var(--destructive) / var(--tw-text-opacity, 1));
 }
 
 .focus\:ring-2:focus {
@@ -5145,9 +5128,6 @@ body {
     --tw-scale-x: 1.02;
     --tw-scale-y: 1.02;
     transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
-  }
-  .lg\:grid-cols-2 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .lg\:grid-cols-3 {
     grid-template-columns: repeat(3, minmax(0, 1fr));

@@ -1,22 +1,19 @@
 {
-  "overview": "Atlas Learning Hub is an educational platform with blogs, notes, videos, AI tutoring, and role-based dashboards for creators, students, and admins.",
+  "overview": "Atlas Learning Hub — a learning platform with blogs, notes, videos, AI tutor, and dashboards, all accessible without sign-in.",
   "features": [
-    "Blogs with rich editor, likes, comments, and bookmarks",
-    "Notes with upload and download",
-    "Videos with shorts and long-form player",
-    "AI Tutor chat with markdown rendering and conversation history",
-    "Creator, Student, and Admin dashboards with real analytics charts",
-    "Global search with filters and recommendations",
-    "Internet Identity authentication with four roles",
-    "Dark and light themes with responsive mobile layouts"
+    "Browse and read blogs, notes, and videos",
+    "Create blogs, notes, and videos without sign-in",
+    "Like, bookmark, and comment on content",
+    "Chat with an AI tutor",
+    "View creator and student dashboards",
+    "Search and discover trending content"
   ],
-  "category": "education",
+  "category": "productivity",
   "tags": [
+    "learning",
     "education",
-    "content-management",
-    "ai-tutor",
-    "analytics",
-    "accessibility"
+    "content",
+    "ai-tutor"
   ],
-  "last_updated": "2026-07-03T21:24:56.231Z"
+  "last_updated": "2026-07-03T23:10:56.117Z"
 }

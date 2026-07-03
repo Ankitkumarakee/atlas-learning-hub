@@ -11,13 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useBlogs, useNotes, useVideos } from "@/hooks/useQueries";
 import type { ContentCardItem } from "@/types";
 import { Link, useParams } from "@tanstack/react-router";
-import {
-  BookOpen,
-  FileText,
-  LogOut,
-  PlayCircle,
-  User as UserIcon,
-} from "lucide-react";
+import { BookOpen, FileText, PlayCircle, User as UserIcon } from "lucide-react";
 import { motion } from "motion/react";
 import { useMemo, useState } from "react";
 
@@ -148,16 +142,6 @@ export default function ProfilePage() {
                 {totalCount} {totalCount === 1 ? "item" : "items"} published
               </p>
             </div>
-            {isOwnProfile && auth.isSignedIn && (
-              <Button
-                variant="outline"
-                onClick={() => auth.signOut()}
-                data-ocid="profile.signout_button"
-              >
-                <LogOut className="mr-2 size-4" aria-hidden />
-                Sign out
-              </Button>
-            )}
           </motion.div>
         </div>
       </section>

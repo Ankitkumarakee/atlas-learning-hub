@@ -5,8 +5,7 @@ import { LoadingState } from "@/components/shared/LoadingState";
 import { StatCard } from "@/components/shared/StatCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuth } from "@/hooks/useAuth";
+import { Card, CardContent } from "@/components/ui/card";
 import { useStudentDashboard } from "@/hooks/useQueries";
 import { Link } from "@tanstack/react-router";
 import {
@@ -49,25 +48,7 @@ function formatDateTime(value: unknown): string {
 }
 
 export default function StudentDashboardPage() {
-  const { isSignedIn } = useAuth();
   const { data, isLoading, isError, error } = useStudentDashboard();
-
-  if (!isSignedIn) {
-    return (
-      <section className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6">
-        <EmptyState
-          icon={Sparkles}
-          title="Sign in to view your dashboard"
-          description="Your bookmarks, learning activity, and AI tutor conversations live here. Sign in with Internet Identity to continue."
-          actionLabel="Sign in"
-          onAction={() => {
-            window.location.assign("/");
-          }}
-          ocid="student.empty_state"
-        />
-      </section>
-    );
-  }
 
   if (isLoading) {
     return (

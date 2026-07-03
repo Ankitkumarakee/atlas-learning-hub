@@ -1,5 +1,4 @@
 import { ChatMessage } from "@/components/shared/ChatMessage";
-import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { TypingIndicator } from "@/components/shared/TypingIndicator";
 import {
@@ -17,7 +16,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAuth } from "@/hooks/useAuth";
 import {
   useConversations,
   useCreateConversation,
@@ -30,7 +28,6 @@ import { useNavigate, useParams } from "@tanstack/react-router";
 import {
   Bot,
   Clock,
-  LogIn,
   MessageSquarePlus,
   Send,
   Sparkles,
@@ -218,25 +215,6 @@ function ConversationSidebar({ activeId, onSelect, onNew }: SidebarProps) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Sign-in gate                                                       */
-/* ------------------------------------------------------------------ */
-
-function SignInGate({ onSignIn }: { onSignIn: () => void }) {
-  return (
-    <div className="flex flex-1 items-center justify-center p-6">
-      <EmptyState
-        icon={Bot}
-        title="Sign in to use the AI Tutor"
-        description="Ask anything — answers are grounded in your uploads and all public platform content. Sign in with Internet Identity to start chatting."
-        actionLabel="Sign in with Internet Identity"
-        onAction={onSignIn}
-        ocid="tutor.signin.empty_state"
-      />
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
 /* Chat area                                                          */
 /* ------------------------------------------------------------------ */
 
@@ -417,7 +395,6 @@ function ChatArea({ conversationId }: ChatAreaProps) {
 /* ------------------------------------------------------------------ */
 
 export default function AITutorPage() {
-  const auth = useAuth();
   const navigate = useNavigate();
   const params = useParams({ strict: false });
   const createConversation = useCreateConversation();
@@ -447,14 +424,6 @@ export default function AITutorPage() {
       params: { conversationId: id.toString() },
     });
   };
-
-  if (auth.isGuest) {
-    return (
-      <div className="flex h-[calc(100vh-4rem)] flex-col">
-        <SignInGate onSignIn={auth.signIn} />
-      </div>
-    );
-  }
 
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col lg:flex-row">

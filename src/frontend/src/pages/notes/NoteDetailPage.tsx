@@ -7,7 +7,6 @@ import { RelatedContentSection } from "@/components/shared/RelatedContentSection
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { useAuth } from "@/hooks/useAuth";
 import { useBackend } from "@/hooks/useBackend";
 import { useLikeNote, useNote, useRelatedContent } from "@/hooks/useQueries";
 import { recommendationsToCardItems } from "@/lib/recommendations";
@@ -53,7 +52,6 @@ export default function NoteDetailPage() {
   const { id } = useParams({ strict: false }) as { id: string };
   const noteId = id ? BigInt(id) : undefined;
   const navigate = useNavigate();
-  const { isSignedIn, signIn } = useAuth();
   const { actor } = useBackend();
   const { data: note, isLoading, isError } = useNote(noteId);
   const relatedQuery = useRelatedContent(ContentType.note, noteId, 4);
@@ -67,11 +65,6 @@ export default function NoteDetailPage() {
   const [downloading, setDownloading] = useState(false);
 
   const handleLike = () => {
-    if (!isSignedIn) {
-      toast.error("Please sign in to like this note.");
-      signIn();
-      return;
-    }
     if (noteId === undefined) return;
     setLiked((v) => !v);
     likeMutation.mutate(noteId, {
@@ -83,11 +76,6 @@ export default function NoteDetailPage() {
   };
 
   const handleBookmark = async () => {
-    if (!isSignedIn) {
-      toast.error("Please sign in to bookmark this note.");
-      signIn();
-      return;
-    }
     if (noteId === undefined || !actor) return;
     setBookmarked((v) => !v);
     try {

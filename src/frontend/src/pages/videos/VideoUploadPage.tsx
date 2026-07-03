@@ -1,4 +1,3 @@
-import { EmptyState } from "@/components/shared/EmptyState";
 import { FileUpload } from "@/components/shared/FileUpload";
 import type { UploadedFile } from "@/components/shared/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -13,12 +12,11 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { useAuth } from "@/hooks/useAuth";
 import { useCreateVideo } from "@/hooks/useQueries";
 import type { Category, VideoInput } from "@/types";
 import { ExternalBlob } from "@caffeineai/object-storage";
 import { useNavigate } from "@tanstack/react-router";
-import { Film, Lock, Upload, Video as VideoIcon } from "lucide-react";
+import { Film, Upload, Video as VideoIcon } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -68,7 +66,6 @@ function makeUploader() {
 
 export default function VideoUploadPage() {
   const navigate = useNavigate();
-  const auth = useAuth();
   const createVideo = useCreateVideo();
 
   const [title, setTitle] = useState("");
@@ -80,24 +77,6 @@ export default function VideoUploadPage() {
 
   const [videoFile, setVideoFile] = useState<UploadedFile | null>(null);
   const [thumbnailFile, setThumbnailFile] = useState<UploadedFile | null>(null);
-
-  // Gate: only creators (signed-in, non-guest) can upload.
-  if (!auth.isCreator) {
-    return (
-      <div className="bg-background">
-        <div className="mx-auto w-full max-w-3xl px-4 py-16 sm:px-6">
-          <EmptyState
-            icon={Lock}
-            title="Sign in to upload"
-            description="You need an Internet Identity account to publish videos on the platform."
-            actionLabel="Sign in with Internet Identity"
-            onAction={auth.signIn}
-            ocid="video.upload.signin.empty_state"
-          />
-        </div>
-      </div>
-    );
-  }
 
   const canSubmit =
     title.trim().length > 0 &&

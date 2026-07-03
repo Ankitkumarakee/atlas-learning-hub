@@ -7,7 +7,6 @@ import { LoadingState } from "@/components/shared/LoadingState";
 import { RelatedContentSection } from "@/components/shared/RelatedContentSection";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/useAuth";
 import {
   useAddComment,
   useBlog,
@@ -28,7 +27,6 @@ export default function BlogDetailPage() {
   const { id } = useParams({ strict: false }) as { id?: string };
   const blogId = BigInt(id!);
   const navigate = useNavigate();
-  const { isSignedIn } = useAuth();
 
   const blogQuery = useBlog(blogId);
   const blog = blogQuery.data;
@@ -164,13 +162,8 @@ export default function BlogDetailPage() {
               liked={liked}
               count={Number(blog.likeCount)}
               onToggle={handleLike}
-              disabled={!isSignedIn}
             />
-            <BookmarkButton
-              bookmarked={bookmarked}
-              onToggle={handleBookmark}
-              disabled={!isSignedIn}
-            />
+            <BookmarkButton bookmarked={bookmarked} onToggle={handleBookmark} />
           </div>
         </div>
       </section>
@@ -192,7 +185,6 @@ export default function BlogDetailPage() {
                 onDeleteComment={(commentId) =>
                   deleteCommentMut.mutate({ id: commentId, blogId })
                 }
-                canComment={isSignedIn}
                 isAdding={addCommentMut.isPending}
               />
             )}

@@ -6,7 +6,6 @@ import SearchPage from "@/pages/SearchPage";
 import BlogDetailPage from "@/pages/blogs/BlogDetailPage";
 import BlogEditorPage from "@/pages/blogs/BlogEditorPage";
 import BlogListPage from "@/pages/blogs/BlogListPage";
-import AdminDashboardPage from "@/pages/dashboards/AdminDashboardPage";
 import CreatorDashboardPage from "@/pages/dashboards/CreatorDashboardPage";
 import StudentDashboardPage from "@/pages/dashboards/StudentDashboardPage";
 import NoteDetailPage from "@/pages/notes/NoteDetailPage";
@@ -130,12 +129,6 @@ const studentDashboardRoute = createRoute({
   component: StudentDashboardPage,
 });
 
-const adminDashboardRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/dashboard/admin",
-  component: AdminDashboardPage,
-});
-
 const profileRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/profile",
@@ -195,7 +188,6 @@ const routeTree = rootRoute.addChildren([
   tutorConversationRoute,
   creatorDashboardRoute,
   studentDashboardRoute,
-  adminDashboardRoute,
   profileRoute,
   profileByIdRoute,
   searchRoute,

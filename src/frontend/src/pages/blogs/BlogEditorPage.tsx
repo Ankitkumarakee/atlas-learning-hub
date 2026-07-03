@@ -2,16 +2,14 @@ import { useNavigate, useParams } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
-import { EmptyState } from "@/components/shared/EmptyState";
 import { LoadingState } from "@/components/shared/LoadingState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { useAuth } from "@/hooks/useAuth";
 import { useBlog, useCreateBlog, useUpdateBlog } from "@/hooks/useQueries";
-import { ArrowLeft, Lock, Save } from "lucide-react";
+import { ArrowLeft, Save } from "lucide-react";
 import { toast } from "sonner";
 
 const quillModules = {
@@ -41,7 +39,6 @@ const quillFormats = [
 export default function BlogEditorPage() {
   const { id } = useParams({ strict: false }) as { id?: string };
   const navigate = useNavigate();
-  const { isCreator } = useAuth();
 
   const isEditMode = !!id;
   const blogId = id ? BigInt(id) : undefined;
@@ -84,30 +81,6 @@ export default function BlogEditorPage() {
         .filter(Boolean),
     [tags],
   );
-
-  if (!isCreator) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
-          <EmptyState
-            icon={Lock}
-            title="Creator access required"
-            description="Only approved creators can write blogs. Sign in with a creator account to continue."
-          />
-          <div className="mt-6 flex justify-center">
-            <Button
-              data-ocid="blog.back_button"
-              variant="secondary"
-              onClick={() => navigate({ to: "/blogs" })}
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to blogs
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (isEditMode && isLoading) {
     return (

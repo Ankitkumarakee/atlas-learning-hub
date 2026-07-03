@@ -59,31 +59,11 @@ type Video =
    videoBlobId: text;
    viewCount: nat;
  };
-type UserStatus = 
- variant {
-   active;
-   suspended;
- };
-type UserRole__1 = 
- variant {
-   admin;
-   creator;
-   user;
- };
 type UserRole = 
  variant {
    admin;
    guest;
    user;
- };
-type UserManagementItem = 
- record {
-   contentCount: nat;
-   createdAt: Timestamp;
-   id: principal;
-   name: text;
-   role: UserRole__1;
-   status: UserStatus;
  };
 type UserId = principal;
 type TrendingItem = 
@@ -188,12 +168,6 @@ type RecentCommentItem =
    contentType: ContentType;
    createdAt: Timestamp;
  };
-type PlatformGrowthPoint = 
- record {
-   date: text;
-   newContent: nat;
-   newUsers: nat;
- };
 type NotificationView = 
  record {
    content: text;
@@ -278,24 +252,6 @@ type NoteFileType =
    pdf;
    ppt;
    zip;
- };
-type ModerationTarget = 
- record {
-   contentType: ContentType;
-   id: nat;
- };
-type ModerationStatus = 
- variant {
-   approved;
-   flagged;
-   hidden;
- };
-type ModerationQueueItem = 
- record {
-   content: ContentRef;
-   flaggedAt: Timestamp;
-   reason: text;
-   status: ModerationStatus;
  };
 type MessageRole = 
  variant {
@@ -424,12 +380,6 @@ type ContentPerformanceItem =
    trend: int;
    views: nat;
  };
-type ContentDistribution = 
- record {
-   blogs: nat;
-   notes: nat;
-   videos: nat;
- };
 type CommentView = 
  record {
    author: principal;
@@ -470,21 +420,6 @@ type BlogSort =
    newest;
  };
 type BlogId = nat;
-type AdminTotals = 
- record {
-   flaggedItemsCount: nat;
-   totalContentItems: nat;
-   totalCreators: nat;
-   totalUsers: nat;
- };
-type AdminDashboard = 
- record {
-   contentDistribution: ContentDistribution;
-   moderationQueue: vec ModerationQueueItem;
-   platformGrowthOverTime: vec PlatformGrowthPoint;
-   totals: AdminTotals;
-   users: vec UserManagementItem;
- };
 type AIConversationSummary = 
  record {
    id: nat;
@@ -515,12 +450,9 @@ service : {
   _initialize_access_control: () -> ();
   _internet_identity_sign_in_finish: () -> (Result);
   _internet_identity_sign_in_start: () -> (blob);
-  activateUser: (user: principal) -> ();
   addComment: (blogId: BlogId, parentCommentId: opt CommentId, content:
    text) -> (CommentView);
-  approveContent: (target: ModerationTarget) -> ();
   assignCallerUserRole: (user: principal, role: UserRole) -> ();
-  assignRole: (user: principal, role: UserRole__1) -> ();
   bookmarkBlog: (id: BlogId) -> ();
   bookmarkNote: (id: nat) -> ();
   bookmarkVideo: (id: VideoId) -> (bool);
@@ -533,11 +465,9 @@ service : {
   createVideo: (input: VideoInput) -> (Video);
   deleteBlog: (id: BlogId) -> ();
   deleteComment: (id: CommentId) -> ();
-  deleteContent: (target: ModerationTarget) -> ();
   deleteConversation: (conversationId: nat) -> (bool);
   deleteNote: (id: nat) -> ();
   deleteVideo: (id: VideoId) -> (bool);
-  getAdminDashboard: () -> (AdminDashboard);
   getBlog: (id: BlogId) -> (opt BlogView) query;
   getCallerUserRole: () -> (UserRole) query;
   getComments: (blogId: BlogId) -> (vec CommentView) query;
@@ -553,7 +483,6 @@ service : {
   getStudentDashboard: () -> (StudentDashboard);
   getTrending: (limit: nat) -> (vec TrendingItem) query;
   getVideo: (id: VideoId) -> (opt Video) query;
-  hideContent: (target: ModerationTarget) -> ();
   incrementDownload: (id: nat) -> ();
   incrementView: (id: VideoId, sessionKey: text) -> (bool);
   isCallerAdmin: () -> (bool) query;
@@ -572,7 +501,6 @@ service : {
   markNotificationRead: (notificationId: NotificationId) -> ();
   sendMessage: (conversationId: nat, userMessage: text) ->
    (SendMessageResult);
-  suspendUser: (user: principal) -> ();
   transform: (input: TransformationInput) -> (TransformationOutput) query;
   unbookmarkBlog: (id: BlogId) -> ();
   unbookmarkNote: (id: nat) -> ();

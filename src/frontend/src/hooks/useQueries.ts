@@ -1,5 +1,4 @@
 import {
-  type AdminDashboard,
   type BlogId,
   BlogSort,
   type BlogView,
@@ -12,7 +11,6 @@ import {
   type ListBlogsResult,
   type ListNotificationsResult,
   type Message,
-  type ModerationTarget,
   type NoteInput,
   type NoteListQuery,
   type NoteListResult,
@@ -24,7 +22,6 @@ import {
   type SendMessageResult,
   type StudentDashboard,
   type TrendingItem,
-  type UserRole__1,
   type Video,
   type VideoFilter,
   type VideoId,
@@ -32,7 +29,6 @@ import {
   type VideoPage,
   type VideoUpdate,
 } from "@/backend";
-import type { Principal } from "@icp-sdk/core/principal";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useBackend } from "./useBackend";
 
@@ -471,7 +467,7 @@ export function useRelatedContent(
     queryKey: ["related-content", contentType, contentId?.toString(), limit],
     queryFn: async () => {
       if (!actor || contentId === undefined) return [];
-      return actor.getRelatedContent(contentType, contentId, limit);
+      return actor.getRelatedContent(contentType, contentId, BigInt(limit));
     },
     enabled: !!actor && !isFetching && contentId !== undefined,
   });
@@ -483,7 +479,7 @@ export function useTrending(limit: number) {
     queryKey: ["trending", limit],
     queryFn: async () => {
       if (!actor) throw new Error("Actor not ready");
-      return actor.getTrending(limit);
+      return actor.getTrending(BigInt(limit));
     },
     enabled: !!actor && !isFetching,
     staleTime: 60_000,
@@ -594,18 +590,6 @@ export function useStudentDashboard() {
   });
 }
 
-export function useAdminDashboard() {
-  const { actor, isFetching } = useBackend();
-  return useQuery<AdminDashboard>({
-    queryKey: ["admin-dashboard"],
-    queryFn: async () => {
-      if (!actor) throw new Error("Actor not ready");
-      return actor.getAdminDashboard();
-    },
-    enabled: !!actor && !isFetching,
-  });
-}
-
 /* ------------------------------------------------------------------ */
 /* Notifications                                                      */
 /* ------------------------------------------------------------------ */
@@ -647,97 +631,6 @@ export function useMarkAllNotificationsRead() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["notifications"] });
-    },
-  });
-}
-
-/* ------------------------------------------------------------------ */
-/* Admin moderation & user management                                 */
-/* ------------------------------------------------------------------ */
-
-export function useApproveContent() {
-  const qc = useQueryClient();
-  const { actor } = useBackend();
-  return useMutation({
-    mutationFn: async (target: ModerationTarget) => {
-      if (!actor) throw new Error("Actor not ready");
-      return actor.approveContent(target);
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["admin-dashboard"] });
-    },
-  });
-}
-
-export function useHideContent() {
-  const qc = useQueryClient();
-  const { actor } = useBackend();
-  return useMutation({
-    mutationFn: async (target: ModerationTarget) => {
-      if (!actor) throw new Error("Actor not ready");
-      return actor.hideContent(target);
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["admin-dashboard"] });
-    },
-  });
-}
-
-export function useDeleteContent() {
-  const qc = useQueryClient();
-  const { actor } = useBackend();
-  return useMutation({
-    mutationFn: async (target: ModerationTarget) => {
-      if (!actor) throw new Error("Actor not ready");
-      return actor.deleteContent(target);
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["admin-dashboard"] });
-      qc.invalidateQueries({ queryKey: ["blogs"] });
-      qc.invalidateQueries({ queryKey: ["notes"] });
-      qc.invalidateQueries({ queryKey: ["videos"] });
-    },
-  });
-}
-
-export function useSuspendUser() {
-  const qc = useQueryClient();
-  const { actor } = useBackend();
-  return useMutation({
-    mutationFn: async (user: Principal) => {
-      if (!actor) throw new Error("Actor not ready");
-      return actor.suspendUser(user);
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["admin-dashboard"] });
-    },
-  });
-}
-
-export function useActivateUser() {
-  const qc = useQueryClient();
-  const { actor } = useBackend();
-  return useMutation({
-    mutationFn: async (user: Principal) => {
-      if (!actor) throw new Error("Actor not ready");
-      return actor.activateUser(user);
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["admin-dashboard"] });
-    },
-  });
-}
-
-export function useAssignRole() {
-  const qc = useQueryClient();
-  const { actor } = useBackend();
-  return useMutation({
-    mutationFn: async (input: { user: Principal; role: UserRole__1 }) => {
-      if (!actor) throw new Error("Actor not ready");
-      return actor.assignRole(input.user, input.role);
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["admin-dashboard"] });
     },
   });
 }

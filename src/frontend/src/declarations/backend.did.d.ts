@@ -16,19 +16,6 @@ export interface AIConversationSummary {
   'lastMessageAt' : Timestamp,
   'messageCount' : bigint,
 }
-export interface AdminDashboard {
-  'contentDistribution' : ContentDistribution,
-  'moderationQueue' : Array<ModerationQueueItem>,
-  'platformGrowthOverTime' : Array<PlatformGrowthPoint>,
-  'totals' : AdminTotals,
-  'users' : Array<UserManagementItem>,
-}
-export interface AdminTotals {
-  'totalCreators' : bigint,
-  'totalUsers' : bigint,
-  'totalContentItems' : bigint,
-  'flaggedItemsCount' : bigint,
-}
 export type BlogId = bigint;
 export type BlogSort = { 'mostBookmarked' : null } |
   { 'newest' : null } |
@@ -62,11 +49,6 @@ export interface CommentView {
   'createdAt' : Timestamp,
   'author' : Principal,
   'blogId' : BlogId,
-}
-export interface ContentDistribution {
-  'notes' : bigint,
-  'blogs' : bigint,
-  'videos' : bigint,
 }
 export interface ContentPerformanceItem {
   'id' : bigint,
@@ -166,16 +148,6 @@ export interface Message {
 }
 export type MessageRole = { 'user' : null } |
   { 'assistant' : null };
-export interface ModerationQueueItem {
-  'status' : ModerationStatus,
-  'content' : ContentRef,
-  'flaggedAt' : Timestamp,
-  'reason' : string,
-}
-export type ModerationStatus = { 'hidden' : null } |
-  { 'approved' : null } |
-  { 'flagged' : null };
-export interface ModerationTarget { 'id' : bigint, 'contentType' : ContentType }
 export type NoteFileType = { 'pdf' : null } |
   { 'ppt' : null } |
   { 'zip' : null } |
@@ -245,11 +217,6 @@ export interface NotificationView {
   'createdAt' : Timestamp,
   'read' : boolean,
   'recipient' : Principal,
-}
-export interface PlatformGrowthPoint {
-  'date' : string,
-  'newContent' : bigint,
-  'newUsers' : bigint,
 }
 export interface RecentCommentItem {
   'contentId' : bigint,
@@ -328,22 +295,9 @@ export interface TrendingItem {
   'score' : number,
 }
 export type UserId = Principal;
-export interface UserManagementItem {
-  'id' : Principal,
-  'status' : UserStatus,
-  'contentCount' : bigint,
-  'name' : string,
-  'createdAt' : Timestamp,
-  'role' : UserRole__1,
-}
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'guest' : null };
-export type UserRole__1 = { 'creator' : null } |
-  { 'admin' : null } |
-  { 'user' : null };
-export type UserStatus = { 'active' : null } |
-  { 'suspended' : null };
 export interface Video {
   'id' : VideoId,
   'title' : string,
@@ -423,11 +377,8 @@ export interface _SERVICE {
   '_initialize_access_control' : ActorMethod<[], undefined>,
   '_internet_identity_sign_in_finish' : ActorMethod<[], Result>,
   '_internet_identity_sign_in_start' : ActorMethod<[], Uint8Array>,
-  'activateUser' : ActorMethod<[Principal], undefined>,
   'addComment' : ActorMethod<[BlogId, [] | [CommentId], string], CommentView>,
-  'approveContent' : ActorMethod<[ModerationTarget], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
-  'assignRole' : ActorMethod<[Principal, UserRole__1], undefined>,
   'bookmarkBlog' : ActorMethod<[BlogId], undefined>,
   'bookmarkNote' : ActorMethod<[bigint], undefined>,
   'bookmarkVideo' : ActorMethod<[VideoId], boolean>,
@@ -444,11 +395,9 @@ export interface _SERVICE {
   'createVideo' : ActorMethod<[VideoInput], Video>,
   'deleteBlog' : ActorMethod<[BlogId], undefined>,
   'deleteComment' : ActorMethod<[CommentId], undefined>,
-  'deleteContent' : ActorMethod<[ModerationTarget], undefined>,
   'deleteConversation' : ActorMethod<[bigint], boolean>,
   'deleteNote' : ActorMethod<[bigint], undefined>,
   'deleteVideo' : ActorMethod<[VideoId], boolean>,
-  'getAdminDashboard' : ActorMethod<[], AdminDashboard>,
   'getBlog' : ActorMethod<[BlogId], [] | [BlogView]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getComments' : ActorMethod<[BlogId], Array<CommentView>>,
@@ -468,7 +417,6 @@ export interface _SERVICE {
   'getStudentDashboard' : ActorMethod<[], StudentDashboard>,
   'getTrending' : ActorMethod<[bigint], Array<TrendingItem>>,
   'getVideo' : ActorMethod<[VideoId], [] | [Video]>,
-  'hideContent' : ActorMethod<[ModerationTarget], undefined>,
   'incrementDownload' : ActorMethod<[bigint], undefined>,
   'incrementView' : ActorMethod<[VideoId, string], boolean>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
@@ -486,7 +434,6 @@ export interface _SERVICE {
   'markAllNotificationsRead' : ActorMethod<[], undefined>,
   'markNotificationRead' : ActorMethod<[NotificationId], undefined>,
   'sendMessage' : ActorMethod<[bigint, string], SendMessageResult>,
-  'suspendUser' : ActorMethod<[Principal], undefined>,
   'transform' : ActorMethod<[TransformationInput], TransformationOutput>,
   'unbookmarkBlog' : ActorMethod<[BlogId], undefined>,
   'unbookmarkNote' : ActorMethod<[bigint], undefined>,
