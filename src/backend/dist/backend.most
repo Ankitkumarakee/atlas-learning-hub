@@ -1,0 +1,361 @@
+// Version: 4.0.0
+type AccessControlState__978773586 =
+  {
+    var adminAssigned : Bool;
+    userRoles : Map__246123559<Principal, UserRole__295506768>
+  };
+type BlogBookmark__607404632 = {blogId : Nat; user : Principal};
+type BlogBookmark__871859430 = {blogId : BlogId__487389469; user : Principal};
+type BlogId__487389469 = Nat;
+type BlogLike__230135281 = {blogId : BlogId__487389469; user : Principal};
+type BlogLike__717842085 = {blogId : Nat; user : Principal};
+type Blog__213160858 =
+  {
+    author : Principal;
+    content : Text;
+    coverImageBlobId : ?Blob;
+    createdAt : Timestamp__173120808;
+    excerpt : Text;
+    id : BlogId__487389469;
+    var likeCount : Nat;
+    published : Bool;
+    tags : [Text];
+    title : Text;
+    updatedAt : Timestamp__173120808;
+    var viewCount : Nat
+  };
+type Blog__939829344 =
+  {
+    author : Principal;
+    content : Text;
+    coverImageBlobId : ?Blob;
+    createdAt : Timestamp__851243262;
+    excerpt : Text;
+    id : Nat;
+    var likeCount : Nat;
+    published : Bool;
+    tags : [Text];
+    title : Text;
+    updatedAt : Timestamp__851243262;
+    var viewCount : Nat
+  };
+type Category__1029206970 = Text;
+type CommentId__383528288 = Nat;
+type CommentLike__832673248 =
+  {commentId : CommentId__383528288; user : Principal};
+type CommentLike__987293217 = {commentId : Nat; user : Principal};
+type Comment__632197416 =
+  {
+    author : Principal;
+    blogId : Nat;
+    content : Text;
+    createdAt : Timestamp__851243262;
+    id : Nat;
+    var likeCount : Nat;
+    parentCommentId : ?Nat
+  };
+type Comment__676062870 =
+  {
+    author : Principal;
+    blogId : BlogId__487389469;
+    content : Text;
+    createdAt : Timestamp__173120808;
+    id : CommentId__383528288;
+    var likeCount : Nat;
+    parentCommentId : ?CommentId__383528288
+  };
+type Conversation__231060879 =
+  {
+    createdAt : Timestamp__420447510;
+    id : Nat;
+    title : Text;
+    updatedAt : Timestamp__420447510;
+    user : UserId__881919359
+  };
+type Conversation__766025387 =
+  {
+    createdAt : Nat;
+    id : Nat;
+    title : Text;
+    updatedAt : Nat;
+    user : Principal
+  };
+type Data__547710445<T> = {var count : Nat__93962160; elements : [var ?T]};
+type Data__552063367<K, V> = {var count : Nat__93962160; kvs : [var ?(K, V)]};
+type Internal__141955830<T> =
+  {children : [var ?Node__656343714<T>]; data : Data__547710445<T>};
+type Internal__455405067<K, V> =
+  {children : [var ?Node__279997185<K, V>]; data : Data__552063367<K, V>};
+type Leaf__114713147<K, V> = {data : Data__552063367<K, V>};
+type Leaf__384956168<T> = {data : Data__547710445<T>};
+type List__716101829<T> =
+  {
+    var blockIndex : Nat__93962160;
+    var blocks : [var [var ?T]];
+    var elementIndex : Nat__93962160
+  };
+type List__852723865<T> = List__716101829<T>;
+type Map__190625089<K, V> = Map__719753394<K, V>;
+type Map__246123559<K, V> = Map__190625089<K, V>;
+type Map__719753394<K, V> =
+  {var root : Node__279997185<K, V>; var size : Nat__93962160};
+type MessageRole__1064161304 = {#assistant; #user};
+type MessageRole__925150515 = {#assistant; #user};
+type Message__762307844 =
+  {
+    content : Text;
+    conversationId : Nat;
+    createdAt : Nat;
+    id : Nat;
+    role : MessageRole__925150515;
+    sources : [SourceReference__462520333]
+  };
+type Message__975387568 =
+  {
+    content : Text;
+    conversationId : Nat;
+    createdAt : Timestamp__420447510;
+    id : Nat;
+    role : MessageRole__1064161304;
+    sources : [SourceReference__199733943]
+  };
+type Nat__920180692 = Nat;
+type Nat__93962160 = Nat__920180692;
+type NewActor__351472656 =
+  {
+    accessControlState : AccessControlState__978773586;
+    blogBookmarks : Set__726347137<BlogBookmark__607404632>;
+    blogLikes : Set__726347137<BlogLike__717842085>;
+    blogs : List__852723865<Blog__939829344>;
+    commentLikes : Set__726347137<CommentLike__987293217>;
+    comments : List__852723865<Comment__632197416>;
+    conversations : List__852723865<Conversation__766025387>;
+    messages : List__852723865<Message__762307844>;
+    nextBlogId : {var next : Nat};
+    nextCommentId : {var next : Nat};
+    nextConversationId : {var value : Nat};
+    nextMessageId : {var value : Nat};
+    nextNoteId : {var value : Nat};
+    nextNotificationId : {var value : Nat};
+    noteBookmarks : Set__726347137<NoteBookmark__369993583>;
+    noteLikes : Set__726347137<NoteLike__22140938>;
+    notes : List__852723865<Note__1275256>;
+    notificationsByUser :
+      Map__246123559<Principal, List__852723865<Notification__1069407876>>;
+    videoStore : VideoStore__499282929
+  };
+type Node__279997185<K, V> =
+  {#internal : Internal__455405067<K, V>; #leaf : Leaf__114713147<K, V>};
+type Node__656343714<T> =
+  {#internal : Internal__141955830<T>; #leaf : Leaf__384956168<T>};
+type NoteBookmark__197903564 = {noteId : Nat; user : Principal};
+type NoteBookmark__369993583 = {noteId : Nat; user : Principal};
+type NoteFileType__723882063 = {#docx; #pdf; #ppt; #zip};
+type NoteFileType__817625141 = {#docx; #pdf; #ppt; #zip};
+type NoteLike__1011815851 = {noteId : Nat; user : Principal};
+type NoteLike__22140938 = {noteId : Nat; user : Principal};
+type Note__1063160515 =
+  {
+    author : Principal;
+    blobId : Text;
+    createdAt : Nat;
+    description : Text;
+    var downloadCount : Nat;
+    fileSize : Nat;
+    fileType : NoteFileType__723882063;
+    id : Nat;
+    var likeCount : Nat;
+    published : Bool;
+    subject : Text;
+    title : Text;
+    updatedAt : Nat
+  };
+type Note__1275256 =
+  {
+    author : Principal;
+    blobId : Text;
+    createdAt : Nat;
+    description : Text;
+    var downloadCount : Nat;
+    fileSize : Nat;
+    fileType : NoteFileType__817625141;
+    id : Nat;
+    var likeCount : Nat;
+    published : Bool;
+    subject : Text;
+    title : Text;
+    updatedAt : Nat
+  };
+type NotificationId__261776522 = Nat;
+type NotificationType__354442253 =
+  {#comment; #like; #moderation; #roleUpgrade; #systemMessage};
+type NotificationType__908192046 =
+  {#comment; #like; #moderation; #roleUpgrade; #systemMessage};
+type Notification__1069407876 =
+  {
+    content : Text;
+    createdAt : Timestamp__851243262;
+    id : Nat;
+    notificationType : NotificationType__354442253;
+    var read : Bool;
+    recipient : Principal;
+    source : ?SourceContent__93933789
+  };
+type Notification__264708741 =
+  {
+    content : Text;
+    createdAt : Timestamp__515776233;
+    id : NotificationId__261776522;
+    notificationType : NotificationType__908192046;
+    var read : Bool;
+    recipient : Principal;
+    source : ?SourceContent__132005118
+  };
+type OldActor__266749596 = {};
+type Set__557760698<T> =
+  {var root : Node__656343714<T>; var size : Nat__93962160};
+type Set__726347137<T> = Set__557760698<T>;
+type SourceContent__132005118 = {contentType : Text; id : Nat};
+type SourceContent__93933789 = {contentType : Text; id : Nat};
+type SourceReference__199733943 =
+  {contentId : Nat; sourceType : SourceType__856565131; title : Text};
+type SourceReference__462520333 =
+  {contentId : Nat; sourceType : SourceType__292563166; title : Text};
+type SourceType__292563166 = {#blog; #note; #video};
+type SourceType__856565131 = {#blog; #note; #video};
+type Timestamp__173120808 = Nat;
+type Timestamp__420447510 = Nat;
+type Timestamp__515776233 = Nat;
+type Timestamp__851243262 = Nat;
+type UserId__881919359 = Principal;
+type UserRole__295506768 = {#admin; #guest; #user};
+type UserRole__686137147 = {#admin; #guest; #user};
+type VideoId__311199452 = Nat;
+type VideoStore__499282929 =
+  {
+    bookmarks : Map__246123559<Principal, Set__726347137<Nat>>;
+    likes : Map__246123559<Nat, Set__726347137<Principal>>;
+    nextId : {var value : Nat};
+    videos : Map__246123559<Nat, Video__190165102>;
+    viewedSessions : Map__246123559<Text, ()>
+  };
+type Video__1035008865 =
+  {
+    author : Principal;
+    category : Category__1029206970;
+    createdAt : Int;
+    description : Text;
+    durationSeconds : Nat;
+    id : VideoId__311199452;
+    isShort : Bool;
+    likeCount : Nat;
+    published : Bool;
+    thumbnailBlobId : Text;
+    title : Text;
+    updatedAt : Int;
+    videoBlobId : Text;
+    viewCount : Nat
+  };
+type Video__190165102 =
+  {
+    author : Principal;
+    category : Text;
+    createdAt : Int;
+    description : Text;
+    durationSeconds : Nat;
+    id : Nat;
+    isShort : Bool;
+    likeCount : Nat;
+    published : Bool;
+    thumbnailBlobId : Text;
+    title : Text;
+    updatedAt : Int;
+    videoBlobId : Text;
+    viewCount : Nat
+  };
+{
+  "20260703_184910" : (old : OldActor__266749596) -> NewActor__351472656
+}
+actor  {
+  stable accessControlState :
+    {
+      var adminAssigned : Bool;
+      userRoles : Map__246123559<Principal, UserRole__686137147>
+    };
+  stable blogBookmarks :
+    {
+      var root : Node__656343714<BlogBookmark__871859430>;
+      var size : Nat__93962160
+    };
+  stable blogLikes :
+    {
+      var root : Node__656343714<BlogLike__230135281>;
+      var size : Nat__93962160
+    };
+  stable blogs :
+    {
+      var blockIndex : Nat__93962160;
+      var blocks : [var [var ?Blog__213160858]];
+      var elementIndex : Nat__93962160
+    };
+  stable commentLikes :
+    {
+      var root : Node__656343714<CommentLike__832673248>;
+      var size : Nat__93962160
+    };
+  stable comments :
+    {
+      var blockIndex : Nat__93962160;
+      var blocks : [var [var ?Comment__676062870]];
+      var elementIndex : Nat__93962160
+    };
+  stable conversations :
+    {
+      var blockIndex : Nat__93962160;
+      var blocks : [var [var ?Conversation__231060879]];
+      var elementIndex : Nat__93962160
+    };
+  stable messages :
+    {
+      var blockIndex : Nat__93962160;
+      var blocks : [var [var ?Message__975387568]];
+      var elementIndex : Nat__93962160
+    };
+  stable nextBlogId : {var next : Nat};
+  stable nextCommentId : {var next : Nat};
+  stable nextConversationId : {var value : Nat};
+  stable nextMessageId : {var value : Nat};
+  stable nextNoteId : {var value : Nat};
+  stable nextNotificationId : {var value : Nat};
+  stable noteBookmarks :
+    {
+      var root : Node__656343714<NoteBookmark__197903564>;
+      var size : Nat__93962160
+    };
+  stable noteLikes :
+    {
+      var root : Node__656343714<NoteLike__1011815851>;
+      var size : Nat__93962160
+    };
+  stable notes :
+    {
+      var blockIndex : Nat__93962160;
+      var blocks : [var [var ?Note__1063160515]];
+      var elementIndex : Nat__93962160
+    };
+  stable notificationsByUser :
+    {
+      var root :
+        Node__279997185<Principal, List__852723865<Notification__264708741>>;
+      var size : Nat__93962160
+    };
+  stable videoStore :
+    {
+      bookmarks :
+        Map__246123559<Principal, Set__726347137<VideoId__311199452>>;
+      likes : Map__246123559<VideoId__311199452, Set__726347137<Principal>>;
+      nextId : {var value : Nat};
+      videos : Map__246123559<VideoId__311199452, Video__1035008865>;
+      viewedSessions : Map__246123559<Text, ()>
+    }
+};

@@ -1,0 +1,518 @@
+type VideoUpdate = 
+ record {
+   category: opt Category;
+   description: opt text;
+   isShort: opt bool;
+   published: opt bool;
+   thumbnailBlobId: opt text;
+   title: opt text;
+ };
+type VideoSort = 
+ variant {
+   mostViewed;
+   newest;
+ };
+type VideoPage = 
+ record {
+   items: vec Video;
+   page: nat;
+   pageSize: nat;
+   total: nat;
+ };
+type VideoInput = 
+ record {
+   category: Category;
+   description: text;
+   durationSeconds: nat;
+   isShort: bool;
+   published: bool;
+   thumbnailBlobId: text;
+   title: text;
+   videoBlobId: text;
+ };
+type VideoId = nat;
+type VideoFilter = 
+ record {
+   category: opt Category;
+   isShort: opt bool;
+   page: opt nat;
+   pageSize: opt nat;
+   search: opt text;
+   sort: opt VideoSort;
+ };
+type Video = 
+ record {
+   author: principal;
+   category: Category;
+   createdAt: int;
+   description: text;
+   durationSeconds: nat;
+   id: VideoId;
+   isShort: bool;
+   likeCount: nat;
+   published: bool;
+   thumbnailBlobId: text;
+   title: text;
+   updatedAt: int;
+   videoBlobId: text;
+   viewCount: nat;
+ };
+type UserStatus = 
+ variant {
+   active;
+   suspended;
+ };
+type UserRole__1 = 
+ variant {
+   admin;
+   creator;
+   user;
+ };
+type UserRole = 
+ variant {
+   admin;
+   guest;
+   user;
+ };
+type UserManagementItem = 
+ record {
+   createdAt: Timestamp;
+   id: principal;
+   name: text;
+   role: UserRole__1;
+   status: UserStatus;
+ };
+type UserId = principal;
+type TransformationOutput = 
+ record {
+   body: blob;
+   headers: vec HttpHeader;
+   status: nat;
+ };
+type TransformationInput = 
+ record {
+   context: blob;
+   response: HttpRequestResult;
+ };
+type Timestamp = nat;
+type StudentTotals = 
+ record {
+   aiConversationsCount: nat;
+   bookmarksCount: nat;
+   likedContentCount: nat;
+ };
+type StudentDashboard = 
+ record {
+   bookmarks: vec BookmarkItem;
+   learningActivityOverTime: vec DatePoint;
+   recentAIConversations: vec AIConversationSummary;
+   totals: StudentTotals;
+ };
+type SourceType = 
+ variant {
+   blog;
+   note;
+   video;
+ };
+type SourceReference = 
+ record {
+   contentId: nat;
+   sourceType: SourceType;
+   title: text;
+ };
+type SourceContent = 
+ record {
+   contentType: text;
+   id: nat;
+ };
+type SendMessageResult = 
+ record {
+   message: Message;
+   sources: vec SourceReference;
+ };
+type Result = 
+ variant {
+   err: Error;
+   ok;
+ };
+type PlatformGrowthPoint = 
+ record {
+   date: text;
+   newContent: nat;
+   newUsers: nat;
+ };
+type NotificationView = 
+ record {
+   content: text;
+   createdAt: Timestamp;
+   id: NotificationId;
+   notificationType: NotificationType;
+   read: bool;
+   recipient: principal;
+   source: opt SourceContent;
+ };
+type NotificationType = 
+ variant {
+   comment;
+   like;
+   moderation;
+   roleUpgrade;
+   systemMessage;
+ };
+type NotificationId = nat;
+type NoteView = 
+ record {
+   author: principal;
+   blobId: text;
+   createdAt: nat;
+   description: text;
+   downloadCount: nat;
+   fileSize: nat;
+   fileType: NoteFileType;
+   id: nat;
+   likeCount: nat;
+   published: bool;
+   subject: text;
+   title: text;
+   updatedAt: nat;
+ };
+type NoteUpdate = 
+ record {
+   blobId: opt text;
+   description: opt text;
+   fileSize: opt nat;
+   fileType: opt NoteFileType;
+   published: opt bool;
+   subject: opt text;
+   title: opt text;
+ };
+type NoteSort = 
+ variant {
+   mostDownloaded;
+   newest;
+ };
+type NoteListResult = 
+ record {
+   items: vec NoteView;
+   page: nat;
+   pageSize: nat;
+   total: nat;
+ };
+type NoteListQuery = 
+ record {
+   fileType: opt NoteFileType;
+   page: nat;
+   pageSize: nat;
+   search: opt text;
+   sort: opt NoteSort;
+   subject: opt text;
+ };
+type NoteInput = 
+ record {
+   blobId: text;
+   description: text;
+   fileSize: nat;
+   fileType: NoteFileType;
+   published: bool;
+   subject: text;
+   title: text;
+ };
+type NoteFileType = 
+ variant {
+   docx;
+   pdf;
+   ppt;
+   zip;
+ };
+type ModerationTarget = 
+ record {
+   contentType: ContentType;
+   id: nat;
+ };
+type ModerationStatus = 
+ variant {
+   approved;
+   flagged;
+   hidden;
+ };
+type ModerationQueueItem = 
+ record {
+   content: ContentRef;
+   flaggedAt: Timestamp;
+   reason: text;
+   status: ModerationStatus;
+ };
+type MessageRole = 
+ variant {
+   assistant;
+   user;
+ };
+type Message = 
+ record {
+   content: text;
+   conversationId: nat;
+   createdAt: Timestamp;
+   id: nat;
+   role: MessageRole;
+   sources: vec SourceReference;
+ };
+type ListNotificationsResult = 
+ record {
+   items: vec NotificationView;
+   unreadCount: nat;
+ };
+type ListBlogsResult = 
+ record {
+   items: vec BlogView;
+   page: nat;
+   pageSize: nat;
+   total: nat;
+ };
+type ListBlogsQuery = 
+ record {
+   page: nat;
+   pageSize: nat;
+   search: opt text;
+   sort: BlogSort;
+   tag: opt text;
+ };
+type HttpRequestResult = 
+ record {
+   body: blob;
+   headers: vec HttpHeader;
+   status: nat;
+ };
+type HttpHeader = 
+ record {
+   name: text;
+   value: text;
+ };
+type Error = 
+ variant {
+   AmbiguousAttribute: record {
+                         field: text;
+                         sources: vec text;
+                       };
+   FrontendOriginMismatch: record {
+                             expected: vec text;
+                             got: text;
+                           };
+   FrontendOriginsNotConfigured;
+   MalformedCandid;
+   MissingField: text;
+   MixedSsoSources: record {
+                      otherKeys: vec text;
+                      ssoKeys: vec text;
+                    };
+   NoAttributes;
+   Stale: record {ageNs: nat;};
+   UnknownNonce;
+   UntrustedSsoSource: record {domain: text;};
+ };
+type EngagementByType = 
+ record {
+   bookmarks: nat;
+   comments: nat;
+   contentType: ContentType;
+   likes: nat;
+ };
+type DatePoint = 
+ record {
+   count: nat;
+   date: text;
+ };
+type CreatorTotals = 
+ record {
+   contentCount: nat;
+   totalBookmarks: nat;
+   totalLikes: nat;
+   totalViews: nat;
+ };
+type CreatorDashboard = 
+ record {
+   contentPerformance: vec ContentPerformanceItem;
+   engagementByType: vec EngagementByType;
+   totals: CreatorTotals;
+   viewsOverTime: vec DatePoint;
+ };
+type Conversation = 
+ record {
+   createdAt: Timestamp;
+   id: nat;
+   title: text;
+   updatedAt: Timestamp;
+   user: UserId;
+ };
+type ContentType = 
+ variant {
+   blog;
+   note;
+   video;
+ };
+type ContentRef = 
+ record {
+   author: principal;
+   contentType: ContentType;
+   id: nat;
+   title: text;
+ };
+type ContentPerformanceItem = 
+ record {
+   contentType: ContentType;
+   id: nat;
+   title: text;
+   trend: int;
+   views: nat;
+ };
+type ContentDistribution = 
+ record {
+   blogs: nat;
+   notes: nat;
+   videos: nat;
+ };
+type CommentView = 
+ record {
+   author: principal;
+   blogId: BlogId;
+   content: text;
+   createdAt: Timestamp;
+   id: CommentId;
+   likeCount: nat;
+   parentCommentId: opt CommentId;
+ };
+type CommentId = nat;
+type Category = text;
+type BookmarkItem = 
+ record {
+   bookmarkedAt: Timestamp;
+   content: ContentRef;
+ };
+type BlogView = 
+ record {
+   author: principal;
+   content: text;
+   coverImageBlobId: opt blob;
+   createdAt: Timestamp;
+   excerpt: text;
+   id: BlogId;
+   likeCount: nat;
+   published: bool;
+   tags: vec text;
+   title: text;
+   updatedAt: Timestamp;
+   viewCount: nat;
+ };
+type BlogSort = 
+ variant {
+   mostLiked;
+   newest;
+ };
+type BlogId = nat;
+type AdminTotals = 
+ record {
+   flaggedItemsCount: nat;
+   totalContentItems: nat;
+   totalCreators: nat;
+   totalUsers: nat;
+ };
+type AdminDashboard = 
+ record {
+   contentDistribution: ContentDistribution;
+   moderationQueue: vec ModerationQueueItem;
+   platformGrowthOverTime: vec PlatformGrowthPoint;
+   totals: AdminTotals;
+   users: vec UserManagementItem;
+ };
+type AIConversationSummary = 
+ record {
+   id: nat;
+   lastMessageAt: Timestamp;
+   messageCount: nat;
+   title: text;
+ };
+service : {
+  __accessControlState: () -> (reserved) query;
+  __blogBookmarks: () -> (reserved) query;
+  __blogLikes: () -> (reserved) query;
+  __blogs: () -> (reserved) query;
+  __commentLikes: () -> (reserved) query;
+  __comments: () -> (reserved) query;
+  __conversations: (io: opt nat, count: opt nat) -> (vec Conversation) query;
+  __messages: (io: opt nat, count: opt nat) -> (vec Message) query;
+  __nextBlogId: () -> (reserved) query;
+  __nextCommentId: () -> (reserved) query;
+  __nextConversationId: () -> (reserved) query;
+  __nextMessageId: () -> (reserved) query;
+  __nextNoteId: () -> (reserved) query;
+  __nextNotificationId: () -> (reserved) query;
+  __noteBookmarks: () -> (reserved) query;
+  __noteLikes: () -> (reserved) query;
+  __notes: () -> (reserved) query;
+  __notificationsByUser: () -> (reserved) query;
+  __videoStore: () -> (reserved) query;
+  _initialize_access_control: () -> ();
+  _internet_identity_sign_in_finish: () -> (Result);
+  _internet_identity_sign_in_start: () -> (blob);
+  activateUser: (user: principal) -> ();
+  addComment: (blogId: BlogId, parentCommentId: opt CommentId, content:
+   text) -> (CommentView);
+  approveContent: (target: ModerationTarget) -> ();
+  assignCallerUserRole: (user: principal, role: UserRole) -> ();
+  assignRole: (user: principal, role: UserRole__1) -> ();
+  bookmarkBlog: (id: BlogId) -> ();
+  bookmarkNote: (id: nat) -> ();
+  bookmarkVideo: (id: VideoId) -> (bool);
+  createBlog: (title: text, content: text, excerpt: text, tags: vec text,
+   coverImageBlobId: opt blob, published: bool) -> (BlogView);
+  createConversation: (title: text) -> (Conversation);
+  createNote: (input: NoteInput) -> (NoteView);
+  createNotification: (recipient: principal, notificationType:
+   NotificationType, content: text, source: opt SourceContent) -> ();
+  createVideo: (input: VideoInput) -> (Video);
+  deleteBlog: (id: BlogId) -> ();
+  deleteComment: (id: CommentId) -> ();
+  deleteContent: (target: ModerationTarget) -> ();
+  deleteConversation: (conversationId: nat) -> (bool);
+  deleteNote: (id: nat) -> ();
+  deleteVideo: (id: VideoId) -> (bool);
+  getAdminDashboard: () -> (AdminDashboard);
+  getBlog: (id: BlogId) -> (opt BlogView) query;
+  getCallerUserRole: () -> (UserRole) query;
+  getComments: (blogId: BlogId) -> (vec CommentView) query;
+  getCreatorDashboard: () -> (CreatorDashboard);
+  getMessages: (conversationId: nat) -> (vec Message);
+  getNote: (id: nat) -> (opt NoteView) query;
+  getStudentDashboard: () -> (StudentDashboard);
+  getVideo: (id: VideoId) -> (opt Video) query;
+  hideContent: (target: ModerationTarget) -> ();
+  incrementDownload: (id: nat) -> ();
+  incrementView: (id: VideoId, sessionKey: text) -> (bool);
+  isCallerAdmin: () -> (bool) query;
+  isVideoBookmarked: (id: VideoId) -> (bool);
+  isVideoLiked: (id: VideoId) -> (bool);
+  likeBlog: (id: BlogId) -> ();
+  likeComment: (id: CommentId) -> ();
+  likeNote: (id: nat) -> ();
+  likeVideo: (id: VideoId) -> (bool);
+  listBlogs: (q: ListBlogsQuery) -> (ListBlogsResult) query;
+  listConversations: () -> (vec Conversation);
+  listNotes: (q: NoteListQuery) -> (NoteListResult) query;
+  listNotifications: () -> (ListNotificationsResult);
+  listVideos: (filter: VideoFilter) -> (VideoPage) query;
+  markAllNotificationsRead: () -> ();
+  markNotificationRead: (notificationId: NotificationId) -> ();
+  sendMessage: (conversationId: nat, userMessage: text) ->
+   (SendMessageResult);
+  suspendUser: (user: principal) -> ();
+  transform: (input: TransformationInput) -> (TransformationOutput) query;
+  unbookmarkBlog: (id: BlogId) -> ();
+  unbookmarkNote: (id: nat) -> ();
+  unbookmarkVideo: (id: VideoId) -> (bool);
+  unlikeBlog: (id: BlogId) -> ();
+  unlikeNote: (id: nat) -> ();
+  unlikeVideo: (id: VideoId) -> (bool);
+  updateBlog: (id: BlogId, title: text, content: text, excerpt: text, tags:
+   vec text, coverImageBlobId: opt blob, published: bool) -> (BlogView);
+  updateNote: (id: nat, update: NoteUpdate) -> (NoteView);
+  updateVideo: (id: VideoId, update: VideoUpdate) -> (opt Video);
+}

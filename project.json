@@ -1,0 +1,21 @@
+{
+  "overview": "A multi-creator educational platform with blogs, notes, videos, an AI tutor, and analytics dashboards.",
+  "features": [
+    "Write and read rich-text blogs with likes and comments",
+    "Upload and download study notes (PDF, DOCX, PPT, ZIP)",
+    "Upload and watch short and long-form videos",
+    "Chat with an AI tutor that references platform content",
+    "Creator, student, and admin dashboards with charts",
+    "Dark and light theme with responsive design"
+  ],
+  "category": "education",
+  "tags": [
+    "education",
+    "content-platform",
+    "ai-tutor",
+    "blogs",
+    "video",
+    "dashboards"
+  ],
+  "last_updated": "2026-07-03T18:47:26.669Z"
+}
